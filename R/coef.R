@@ -4,7 +4,8 @@
 #' reports results only for the mean equation. \code{coef_var} reports results only for
 #' the variance equation.
 #'
-#' @inheritParams print.hIRT
+#' @param object An object of class \code{hIRT}
+#' @param digits The number of significant digits to use when printing
 #'
 #' @return A data frame of parameter estimates, standard errors, z values and p values.
 #'
@@ -16,8 +17,8 @@
 #' z <- model.matrix( ~ party, nes_econ2012)
 #' nes_m1 <- hgrm(y, x, z)
 #' coef(nes_m1)
-coef.hIRT <- function(x, digits = 3, ...) {
-  round(x[["coefficients"]], digits)
+coef.hIRT <- function(object, digits = 3, ...) {
+  round(object[["coefficients"]], digits)
 }
 
 #' @inheritParams print.hIRT
@@ -72,7 +73,7 @@ coef_var <- function(x, digits = 3) {
 #' nes_m1 <- hgrm(y, x, z)
 #' coef_item(nes_m1)
 
-coef_item <- function(x, ...) UseMethod("coef_item")
+coef_item <- function(x, by_item = TRUE, digits = 3) UseMethod("coef_item")
 
 #' @export
 #' @rdname coef_item
@@ -87,7 +88,7 @@ coef_item.hgrm <- function(x, by_item = TRUE, digits = 3) {
     rownames(out[[i]]) <- vapply(tmp, function(x) x[length(x)], FUN.VALUE = character(1L))
     out[[i]] <- round(out[[i]], digits)
   }
-  setNames(out, x[["item_names"]])
+  stats::setNames(out, x[["item_names"]])
 }
 
 #' @export
@@ -99,5 +100,5 @@ coef_item.hltm <- function(x, by_item = TRUE, digits = 3) {
     return(round(xitem, digits))
   out <- split(xitem, rep(1:J, each = 2))
   for (i in 1:J) rownames(out[[i]]) <- c("Diff", "Dscrmn")
-  setNames(out, x[["item_names"]])
+  stats::setNames(out, x[["item_names"]])
 }

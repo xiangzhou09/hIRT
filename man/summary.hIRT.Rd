@@ -5,19 +5,21 @@
 \alias{print.summary_hIRT}
 \title{Summarizing Hierarchical Item Response Theory Models}
 \usage{
-\method{summary}{hIRT}(x, by_item = FALSE, digits = 3, ...)
+\method{summary}{hIRT}(object, by_item = FALSE, digits = 3, ...)
 
 \method{print}{summary_hIRT}(x, digits = 3, ...)
 }
 \arguments{
-\item{x}{An object of class \code{hIRT}}
+\item{object}{An object of class \code{hIRT}.}
 
 \item{by_item}{Logical. Should item parameters be stored item by item
 (if \code{TRUE}) or put together in a data frame (if \code{FALSE})?}
 
-\item{digits}{the number of significant digits to use when printing}
+\item{digits}{the number of significant digits to use when printing.}
 
 \item{...}{further arguments passed to or from other methods}
+
+\item{x}{An object of class \code{hIRT}}
 }
 \value{
 An object of class \code{summary_hIRT}.

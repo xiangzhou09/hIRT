@@ -2,9 +2,10 @@
 #'
 #' Summarizing the fit of either \code{hltm} or \code{hgrm}.
 #'
-#' @inheritParams print.hIRT
+#' @param object An object of class \code{hIRT}.
 #' @param by_item Logical. Should item parameters be stored item by item
 #'   (if \code{TRUE}) or put together in a data frame (if \code{FALSE})?
+#' @param digits the number of significant digits to use when printing.
 #'
 #' @return An object of class \code{summary_hIRT}.
 #'  \item{call}{The matched call.}
@@ -22,17 +23,17 @@
 #' nes_m1 <- hgrm(y, x, z)
 #' summary(nes_m1, by_item = TRUE)
 
-summary.hIRT <- function(x, by_item = FALSE, digits = 3, ...) {
-  item_coefs <- coef_item(x, by_item = by_item, digits)
-  mean_coefs <- coef_mean(x, digits)
-  var_coefs <- coef_var(x, digits)
-  log_Lik = x[["log_Lik"]]
-  df = sum(x[["H"]]) + sum(x[["p"]]) + sum(x[["q"]]) - 2
-  N = length(x[["scores"]])
+summary.hIRT <- function(object, by_item = FALSE, digits = 3, ...) {
+  item_coefs <- coef_item(object, by_item = by_item, digits)
+  mean_coefs <- coef_mean(object, digits)
+  var_coefs <- coef_var(object, digits)
+  log_Lik = object[["log_Lik"]]
+  df = sum(object[["H"]]) + sum(object[["p"]]) + sum(object[["q"]]) - 2
+  N = length(object[["scores"]])
   AIC = -2 * log_Lik + 2 * df
   BIC = -2 * log_Lik + df * log(N)
   model <- list(log_Lik = log_Lik, AIC = AIC, BIC = BIC)
-  out <- list(call = x[["call"]], model = model, item_coefs = item_coefs,
+  out <- list(call = object[["call"]], model = model, item_coefs = item_coefs,
               mean_coefs = mean_coefs, var_coefs = var_coefs)
   class(out) <- c("summary_hIRT")
   out

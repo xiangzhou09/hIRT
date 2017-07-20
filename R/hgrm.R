@@ -51,6 +51,7 @@
 #' @importFrom rms lrm.fit
 #' @importFrom pryr compose
 #' @importFrom pryr partial
+#' @importFrom gaussquad legendre.quadrature.rules
 #' @export
 #' @references Zhou, Xiang. 2017. "Hierarchical Item Response Models for Analyzing
 #'  Public Opinion." Working paper.
@@ -111,8 +112,8 @@ hgrm <- function(y, x = matrix(1, nrow(y), 1), z = x,
 
     # GH points
     K <- con[["K"]]
-    theta_ls <- con[["C"]] * gaussquad::legendre.quadrature.rules(K)[[K]][["x"]]
-    qw_ls <- con[["C"]] * gaussquad::legendre.quadrature.rules(K)[[K]][["w"]]
+    theta_ls <- con[["C"]] * legendre.quadrature.rules(K)[[K]][["x"]]
+    qw_ls <- con[["C"]] * legendre.quadrature.rules(K)[[K]][["w"]]
 
     # initialization
     theta_eap <- {

@@ -6,18 +6,20 @@
 \alias{coef_var}
 \title{Extracting Parameter Estimates from Hierarchical IRT Models.}
 \usage{
-\method{coef}{hIRT}(x, digits = 3, ...)
+\method{coef}{hIRT}(object, digits = 3, ...)
 
 coef_mean(x, digits = 3)
 
 coef_var(x, digits = 3)
 }
 \arguments{
-\item{x}{An object of class \code{hIRT}}
+\item{object}{An object of class \code{hIRT}}
 
-\item{digits}{the number of significant digits to use when printing}
+\item{digits}{The number of significant digits to use when printing}
 
 \item{...}{further arguments passed to or from other methods}
+
+\item{x}{An object of class \code{hIRT}}
 }
 \value{
 A data frame of parameter estimates, standard errors, z values and p values.
