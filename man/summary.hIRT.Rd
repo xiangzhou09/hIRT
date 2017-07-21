@@ -24,7 +24,7 @@
 \value{
 An object of class \code{summary_hIRT}.
  \item{call}{The matched call.}
- \item{model}{Model fit statistics: Log likehood, AIC, and BIC.}
+ \item{model}{Model fit statistics: Log likelihood, AIC, and BIC.}
  \item{item_coefs}{Item parameter estimates, standard errors,
   z values, and p values.}
  \item{mean_coefs}{Parameter estimates for the mean equation.}

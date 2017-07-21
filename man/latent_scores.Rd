@@ -15,7 +15,7 @@ latent_scores(x, digits = 3)
 A data frame of EAP estimates of latent preferences and their approximate standard errors.
 }
 \description{
-EAP estimates of latent preferneces for either \code{hltm} or \code{hgrm} models.
+EAP estimates of latent preferences for either \code{hltm} or \code{hgrm} models.
 }
 \examples{
 y <- nes_econ2012[, -(1:3)]
