@@ -14,9 +14,8 @@ Depends:
     R (>= 3.3.2),
     stats
 Imports:
-    rms (>= 5.1-1),
     pryr (>= 0.1.2),
-    fastGHQuad (>= 0.2)
+    rms (>= 5.1-1)
 Suggests:
     ggplot2 (>= 2.2.1)
 License: GPL (>= 3)

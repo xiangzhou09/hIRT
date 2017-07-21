@@ -88,8 +88,8 @@ hltm <- function(y, x = matrix(1, nrow(y), 1), z = x,
 
     # GH points
     K <- con[["K"]]
-    theta_ls <- fastGHQuad::gaussHermiteData(K)[["x"]]
-    qw_ls <- fastGHQuad::gaussHermiteData(K)[["w"]]
+    theta_ls <- gh[[K]][["x"]]
+    qw_ls <- gh[[K]][["w"]]
 
     # initialization
     theta_eap <- {
