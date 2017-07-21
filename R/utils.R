@@ -1,3 +1,7 @@
+utils::globalVariables(c("H", "J", "K", "Li", "Lijk", "Lik", "N",
+                  "alpha", "dalpha", "lambda", "p", "q", "pik",
+                  "theta_ls", "w", "x", "y", "z"))
+
 # convert original response data to integers
 fac2int <- function(x) as.integer(factor(x, exclude = c(NA, NaN)))
 
