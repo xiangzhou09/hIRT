@@ -37,7 +37,6 @@ the corresponding item (indexed by \code{beta_set}) be positive
    conditional maximization procedures for updating \eqn{\gamma} and
    \eqn{\lambda}. Default set to \eqn{1e-3}.}
  \item{K}{Number of quadrature points for the E-step. Default 21.}
- \item{C}{\eqn{(-C, C)} sets the range of the quadrature points. Default 5.}
 }}
 }
 \value{

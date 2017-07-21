@@ -4,8 +4,6 @@ invalid_grm <- function(x) max(x, na.rm = TRUE) < 2
 # log likelihood function (return N * J matrix) y: N*J data frame alpha:
 # length J list beta: length J numeric vector theta: length N numeric
 # vector
-
-#' @importFrom stats plogis
 loglik_grm <- function(alpha, beta, theta) {
     util <- outer(theta, beta)
     alpha_l <- simplify2array(unname(Map(function(x, y) x[y], alpha, y)))
@@ -18,8 +16,6 @@ loglik_grm <- function(alpha, beta, theta) {
 # x: N*p model matrix z: N*q model matrix alpha: length J list beta:
 # length J numeric vector gamma: p-vector lambda: q-vector theta_k:
 # numeric scalar qw_k numeric scalar
-
-#' @importFrom stats dnorm
 theta_post_grm <- function(theta_k, qw_k) {
     wt_k <- dnorm(theta_k - x %*% gamma, sd = sqrt(exp(z %*% lambda))) *
         qw_k  # prior density * quadrature weight

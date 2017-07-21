@@ -13,8 +13,6 @@ loglik_ltm <- function(alpha, beta, theta) {
 # x: N*p model matrix z: N*q model matrix alpha: length J list beta:
 # length J numeric vector gamma: p-vector lambda: q-vector theta_k:
 # numeric scalar qw_k numeric scalar
-
-#' @importFrom stats dnorm
 theta_post_ltm <- function(theta_k, qw_k) {
     N <- nrow(y)
     wt_k <- dnorm(theta_k - x %*% gamma, sd = sqrt(exp(z %*% lambda))) *
@@ -41,8 +39,6 @@ tab2df_ltm <- function(tab, theta_ls) {
 }
 
 # derivative of likelihood wrt alpha, given theta_k
-
-#' @importFrom stats plogis
 dalpha_ltm <- function(alpha, beta) {
     putil <- plogis(matrix(alpha, K, J, byrow = TRUE) + outer(theta_ls, beta))
     putil * (1 - putil)

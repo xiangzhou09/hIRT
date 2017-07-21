@@ -5,7 +5,8 @@
 \alias{nes_econ2012}
 \title{Public Attitudes toward Economic Issues in 2012}
 \format{A data frame with 5820 rows and 10 variables: \describe{
-  \item{party}{party identification. 1: Democrat; 2: independent; 3: Republican}
+  \item{gender}{gender. 1: male; 2: female}
+  \item{party}{party identification: Democrat, independent, or Republican}
   \item{educ}{education. 1: high school or less; 2: some college or above}
   \item{health_ins7}{Support for government or private health insurance, 7 categories}
   \item{jobs_guar7}{Support for government guarantee jobs and income, 7 categories}

@@ -5,7 +5,7 @@
 #' may depend on person-specific covariates (\code{x} and \code{z}).
 #' Specifically, the mean is specified as a linear combination of \code{x}
 #' and the log of the variance is specified as a linear combination of
-#' \code{z}. Nonresponses are treated as missing at random.
+#' \code{z}.
 #'
 #' @inheritParams hgrm
 #'
@@ -21,11 +21,7 @@
 #'  \item{q}{The number of predictors for the variance equation.}
 #'  \item{item_names}{Names of items.}
 #'  \item{call}{The matched call.}
-#' @importFrom stats lm
-#' @importFrom stats glm.fit
-#' @importFrom pryr compose
-#' @importFrom pryr partial
-#' @importFrom gaussquad legendre.quadrature.rules
+#'
 #' @export
 #' @references Zhou, Xiang. 2017. "Hierarchical Item Response Models for Analyzing
 #'  Public Opinion." Working paper.
@@ -34,8 +30,8 @@
 #' x <- model.matrix( ~ party * educ, nes_econ2012)
 #' z <- model.matrix( ~ party, nes_econ2012)
 #'
-#' # don't run: nonbinary responses
-#' # nes_m1 <- hltm(y, x, z)
+#' # don't run
+#' # nes_m1 <- hgrm(y, x, z)
 #'
 #' dichotomize <- function(x) findInterval(x, c(mean(x, na.rm = TRUE)))
 #' y_bin <- as.data.frame(lapply(y, dichotomize))
@@ -76,7 +72,7 @@ hltm <- function(y, x = matrix(1, nrow(y), 1), z = x,
 
     # control parameters
     con <- list(max_iter = 150, max_iter2 = 15, eps = 1e-04, eps2 = 0.001,
-        K = 21, C = 5)  # control parameters
+        K = 21)  # control parameters
     con[names(control)] <- control
 
     # dimensions, response categories, etc.
@@ -89,8 +85,8 @@ hltm <- function(y, x = matrix(1, nrow(y), 1), z = x,
 
     # GH points
     K <- con[["K"]]
-    theta_ls <- con[["C"]] * legendre.quadrature.rules(K)[[K]][["x"]]
-    qw_ls <- con[["C"]] * legendre.quadrature.rules(K)[[K]][["w"]]
+    theta_ls <- gh[[K]][["x"]]
+    qw_ls <- gh[[K]][["w"]]
 
     # initialization
     theta_eap <- {
@@ -124,7 +120,7 @@ hltm <- function(y, x = matrix(1, nrow(y), 1), z = x,
         # maximization
         pseudo_tab <- lapply(y, dummy_fun_ltm)
         pseudo_y <- lapply(pseudo_tab, tab2df_ltm, theta_ls = theta_ls)
-        pseudo_logit <- lapply(pseudo_y, function(df) stats::glm.fit(cbind(1, df[["x"]]),
+        pseudo_logit <- lapply(pseudo_y, function(df) glm.fit(cbind(1, df[["x"]]),
             df[["y"]], weights = df[["wt"]], family = quasibinomial("logit"))[["coefficients"]])
         beta <- vapply(pseudo_logit, function(x) x[2L], numeric(1L))
         alpha <- vapply(pseudo_logit, function(x) x[1L], numeric(1L))
@@ -134,14 +130,14 @@ hltm <- function(y, x = matrix(1, nrow(y), 1), z = x,
         # variance regression
         gamma <- solve(t(x) %*% x) %*% t(x) %*% theta_eap
         r2 <- (theta_eap - x %*% gamma)^2 + theta_vap
-        s2 <- stats::glm.fit(x = z, y = r2, intercept = FALSE, family = Gamma(link = "log"))[["fitted.values"]]
+        s2 <- glm.fit(x = z, y = r2, intercept = FALSE, family = Gamma(link = "log"))[["fitted.values"]]
         loglik <- -0.5 * (log(s2) + r2/s2)
         LL0 <- sum(loglik)
         dLL <- 1
         for (m in seq(1, con[["max_iter2"]])) {
             gamma <- lm(theta_eap ~ 0 + x, weights = 1/s2)[["coefficients"]]
             r2 <- (theta_eap - x %*% gamma)^2 + theta_vap
-            var_reg <- stats::glm.fit(x = z, y = r2, intercept = FALSE, family = Gamma(link = "log"))
+            var_reg <- glm.fit(x = z, y = r2, intercept = FALSE, family = Gamma(link = "log"))
             s2 <- var_reg[["fitted.values"]]
             loglik <- -0.5 * (log(s2) + r2/s2)
             LL_temp <- sum(loglik)

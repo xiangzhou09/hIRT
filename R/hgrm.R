@@ -31,7 +31,6 @@
 #'    conditional maximization procedures for updating \eqn{\gamma} and
 #'    \eqn{\lambda}. Default set to \eqn{1e-3}.}
 #'  \item{K}{Number of quadrature points for the E-step. Default 21.}
-#'  \item{C}{\eqn{(-C, C)} sets the range of the quadrature points. Default 5.}
 #' }
 #'
 #' @return An object of class \code{hgrm}.
@@ -46,12 +45,9 @@
 #'  \item{q}{The number of predictors for the variance equation.}
 #'  \item{item_names}{Names of items.}
 #'  \item{call}{The matched call.}
-#' @importFrom stats lm
-#' @importFrom stats glm.fit
 #' @importFrom rms lrm.fit
 #' @importFrom pryr compose
 #' @importFrom pryr partial
-#' @importFrom gaussquad legendre.quadrature.rules
 #' @export
 #' @references Zhou, Xiang. 2017. "Hierarchical Item Response Models for Analyzing
 #'  Public Opinion." Working paper.
@@ -98,7 +94,7 @@ hgrm <- function(y, x = matrix(1, nrow(y), 1), z = x,
 
     # control parameters
     con <- list(max_iter = 150, max_iter2 = 15, eps = 1e-04, eps2 = 0.001,
-        K = 21, C = 5)  # control parameters
+        K = 21)  # control parameters
     con[names(control)] <- control
 
     # dimensions, response categories, etc.
@@ -112,8 +108,8 @@ hgrm <- function(y, x = matrix(1, nrow(y), 1), z = x,
 
     # GH points
     K <- con[["K"]]
-    theta_ls <- con[["C"]] * legendre.quadrature.rules(K)[[K]][["x"]]
-    qw_ls <- con[["C"]] * legendre.quadrature.rules(K)[[K]][["w"]]
+    theta_ls <- gh[[K]][["x"]]
+    qw_ls <- gh[[K]][["w"]]
 
     # initialization
     theta_eap <- {

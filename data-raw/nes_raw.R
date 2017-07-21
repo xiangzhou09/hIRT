@@ -6,7 +6,7 @@
 # library("ggplot2")
 # library("devtools")
 #
-# load("C:/Users/xiz225/Dropbox/hIRT/code/nes8012.RData")
+# load("C:/Users/Xiang/Dropbox/hIRT/code/nes8012.RData")
 #
 # nes_v1 <- nes_v1 %>% data.frame(nvalid_econ = rowSums(!is.na(dplyr::select(., health_ins7:FS_assistblacks3))),
 #                                 nvalid_civil = rowSums(!is.na(dplyr::select(., negro_chan3:blacks_deserve_more5))),
@@ -20,23 +20,19 @@
 #
 # nes_econ <- nes_v1 %>%
 #   filter(nvalid_econ >=1, nvalid_econ_yr_level>=3) %>%
-#   dplyr::select(year, party, educ, health_ins7:FS_assistblacks3)
-# hist(nes_econ$year)
+#   dplyr::select(year, gender, party, educ, health_ins7:FS_assistblacks3)
 #
 # nes_civil <- nes_v1 %>%
 #   filter(nvalid_civil >=1, nvalid_civil_yr_level>=3) %>%
-#   dplyr::select(year, party, educ, negro_chan3:blacks_deserve_more5)
-# hist(nes_civil$year)
+#   dplyr::select(year, gender,  party, educ, negro_chan3:blacks_deserve_more5)
 #
 # nes_moral <- nes_v1 %>%
 #   filter(nvalid_moral >=1, nvalid_moral_yr_level>=3) %>%
-#   dplyr::select(year, party, educ, women_role7:abort4)
-# hist(nes_moral$year)
+#   dplyr::select(year, gender,  party, educ, women_role7:abort4)
 #
 # nes_foreign <- nes_v1 %>%
 #   filter(nvalid_foreign >=1, nvalid_foreign_yr_level>=3) %>%
-#   dplyr::select(year, party, educ, urss_coop7:FS_space3)
-# hist(nes_foreign$year)
+#   dplyr::select(year, gender,  party, educ, urss_coop7:FS_space3)
 #
 # nes_econ2012 <- subset(nes_econ, year == 2012) %>%
 #   dplyr::select(-year, -FS_aids3, -FS_aidcollege3, -FS_homeless3,
@@ -46,4 +42,4 @@
 #                                    "Republican")))
 #
 # use_data(nes_econ2012, overwrite = TRUE)
-
+#

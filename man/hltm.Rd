@@ -37,7 +37,6 @@ the corresponding item (indexed by \code{beta_set}) be positive
    conditional maximization procedures for updating \eqn{\gamma} and
    \eqn{\lambda}. Default set to \eqn{1e-3}.}
  \item{K}{Number of quadrature points for the E-step. Default 21.}
- \item{C}{\eqn{(-C, C)} sets the range of the quadrature points. Default 5.}
 }}
 }
 \value{
@@ -60,15 +59,15 @@ the mean and the variance of the latent preference (ability parameter)
 may depend on person-specific covariates (\code{x} and \code{z}).
 Specifically, the mean is specified as a linear combination of \code{x}
 and the log of the variance is specified as a linear combination of
-\code{z}. Nonresponses are treated as missing at random.
+\code{z}.
 }
 \examples{
 y <- nes_econ2012[, -(1:3)]
 x <- model.matrix( ~ party * educ, nes_econ2012)
 z <- model.matrix( ~ party, nes_econ2012)
 
-# don't run: nonbinary responses
-# nes_m1 <- hltm(y, x, z)
+# don't run
+# nes_m1 <- hgrm(y, x, z)
 
 dichotomize <- function(x) findInterval(x, c(mean(x, na.rm = TRUE)))
 y_bin <- as.data.frame(lapply(y, dichotomize))
