@@ -26,8 +26,6 @@
 #' @importFrom pryr partial
 #' @import stats
 #' @export
-#' @references Zhou, Xiang. 2017. "Hierarchical Item Response Models for Analyzing
-#'  Public Opinion." Working paper.
 #' @examples
 #' y <- nes_econ2012[, -(1:3)]
 #' x <- model.matrix( ~ party * educ, nes_econ2012)
