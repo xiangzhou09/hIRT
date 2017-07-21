@@ -1,6 +1,6 @@
 #' Estimates of Latent Preferences/Abilities
 #'
-#' EAP estimates of latent preferneces for either \code{hltm} or \code{hgrm} models.
+#' EAP estimates of latent preferences for either \code{hltm} or \code{hgrm} models.
 #'
 #' @inheritParams print.hIRT
 #'
