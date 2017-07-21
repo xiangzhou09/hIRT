@@ -48,6 +48,7 @@
 #' @importFrom rms lrm.fit
 #' @importFrom pryr compose
 #' @importFrom pryr partial
+#' @import stats
 #' @export
 #' @references Zhou, Xiang. 2017. "Hierarchical Item Response Models for Analyzing
 #'  Public Opinion." Working paper.
@@ -108,8 +109,8 @@ hgrm <- function(y, x = matrix(1, nrow(y), 1), z = x,
 
     # GH points
     K <- con[["K"]]
-    theta_ls <- gh[[K]][["x"]]
-    qw_ls <- gh[[K]][["w"]]
+    theta_ls <- fastGHQuad::gaussHermiteData(K)[["x"]]
+    qw_ls <- fastGHQuad::gaussHermiteData(K)[["w"]]
 
     # initialization
     theta_eap <- {
