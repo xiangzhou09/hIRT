@@ -15,7 +15,7 @@
   coef.hIRT     10.41   0.05   10.50
   latent_scores 10.17   0.00   10.24
 
-(These examples take only slight more than 10s.)
+(These examples take only slightly more than 10s.)
 
 ## Reverse dependencies
 
