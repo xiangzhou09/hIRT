@@ -27,9 +27,9 @@
 #' @import stats
 #' @export
 #' @examples
-#' y <- nes_racial2012[, -(1:3)]
-#' x <- model.matrix( ~ party * educ, nes_racial2012)
-#' z <- model.matrix( ~ party, nes_racial2012)
+#' y <- nes_racial2008[, -(1:3)]
+#' x <- model.matrix( ~ party * educ, nes_racial2008)
+#' z <- model.matrix( ~ party, nes_racial2008)
 #'
 #' # don't run
 #' # nes_m1 <- hgrm(y, x, z)

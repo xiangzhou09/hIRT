@@ -1,9 +1,9 @@
-#' Racial Attitudes in ANES 2012
+#' Racial Attitudes in ANES 2008
 #'
 #' A dataset containing party ID, education, and responses to 4 survey items
-#' on racial attitudes (toward blacks) from the American National Election Studies, 2012.
+#' on racial attitudes (toward blacks) from the American National Election Studies, 2008.
 #'
-#' @format A data frame with 5820 rows and 10 variables: \describe{
+#' @format A data frame with 2225 rows and 7 variables: \describe{
 #'   \item{gender}{gender. 1: male; 2: female}
 #'   \item{party}{party identification: Democrat, independent, or Republican}
 #'   \item{educ}{education. 1: high school or less; 2: some college or above}
@@ -12,4 +12,4 @@
 #'   \item{blacks_try_harder5}{If blacks would try harder they could be just as well off as whites. 5 categories}
 #'   \item{blacks_deserve_more5}{Over the past few years blacks have gotten less than they deserve, 5 categories}
 #'   }
-"nes_racial2012"
+"nes_racial2008"
