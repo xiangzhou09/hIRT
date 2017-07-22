@@ -41,5 +41,14 @@
 #                         labels = c("Democrat", "independent",
 #                                    "Republican")))
 #
-# use_data(nes_econ2012, overwrite = TRUE)
+# nes_racial2012 <- subset(nes_civil, year == 2012) %>%
+#   dplyr::select(gender, party, educ,
+#                 hard_blacks5, no_favor_blacks5,
+#                 blacks_try_harder5, blacks_deserve_more5) %>%
+#   mutate(party = factor(party, levels = 1:3,
+#                         labels = c("Democrat", "independent",
+#                                    "Republican")))
 #
+# summary(nes_racial2012)
+#
+# use_data(nes_racial2012, overwrite = TRUE)

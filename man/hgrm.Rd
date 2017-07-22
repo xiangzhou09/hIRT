@@ -67,13 +67,9 @@ and the log of the variance is specified as a linear combination of
 \code{z}. Nonresponses are treated as missing at random.
 }
 \examples{
-y <- nes_econ2012[, -(1:3)]
-x <- model.matrix( ~ party * educ, nes_econ2012)
-z <- model.matrix( ~ party, nes_econ2012)
+y <- nes_racial2012[, -(1:3)]
+x <- model.matrix( ~ party * educ, nes_racial2012)
+z <- model.matrix( ~ party, nes_racial2012)
 nes_m1 <- hgrm(y, x, z)
 print(nes_m1)
-}
-\references{
-Zhou, Xiang. 2017. "Hierarchical Item Response Models for Analyzing
- Public Opinion." Working paper.
 }

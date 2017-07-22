@@ -30,9 +30,9 @@ reports results only for the mean equation. \code{coef_var} reports results only
 the variance equation.
 }
 \examples{
-y <- nes_econ2012[, -(1:3)]
-x <- model.matrix( ~ party * educ, nes_econ2012)
-z <- model.matrix( ~ party, nes_econ2012)
+y <- nes_racial2012[, -(1:3)]
+x <- model.matrix( ~ party * educ, nes_racial2012)
+z <- model.matrix( ~ party, nes_racial2012)
 nes_m1 <- hgrm(y, x, z)
 coef(nes_m1)
 coef_mean(nes_m1)

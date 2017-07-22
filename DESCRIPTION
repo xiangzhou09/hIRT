@@ -4,7 +4,7 @@ Title: Hierarchical Item Response Theory (IRT) Models
 Version: 0.1.0
 Authors@R: person("Xiang", "Zhou", email = "xiang_zhou@fas.harvard.edu",
   role = c("aut", "cre"))
-Description: This package implements a class of hierarchical item response
+Description: Implementation of hierarchical item response
   theory (IRT) models where both the mean and the variance of latent preferences
   (ability parameters) can depend on observed covariates. The current
   implementation includes both the two-parameter latent trait model and the

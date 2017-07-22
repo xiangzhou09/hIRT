@@ -18,12 +18,12 @@ A data frame of EAP estimates of latent preferences and their approximate standa
 EAP estimates of latent preferences for either \code{hltm} or \code{hgrm} models.
 }
 \examples{
-y <- nes_econ2012[, -(1:3)]
-x <- model.matrix( ~ party * educ, nes_econ2012)
-z <- model.matrix( ~ party, nes_econ2012)
+y <- nes_racial2012[, -(1:3)]
+x <- model.matrix( ~ party * educ, nes_racial2012)
+z <- model.matrix( ~ party, nes_racial2012)
 nes_m1 <- hgrm(y, x, z)
 pref <- latent_scores(nes_m1)
 require(ggplot2)
-ggplot(data = nes_econ2012) +
+ggplot(data = nes_racial2012) +
 geom_density(aes(x = pref$est, col = party))
 }

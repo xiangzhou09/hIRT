@@ -12,9 +12,9 @@
 #' @export
 #'
 #' @examples
-#' y <- nes_econ2012[, -(1:3)]
-#' x <- model.matrix( ~ party * educ, nes_econ2012)
-#' z <- model.matrix( ~ party, nes_econ2012)
+#' y <- nes_racial2012[, -(1:3)]
+#' x <- model.matrix( ~ party * educ, nes_racial2012)
+#' z <- model.matrix( ~ party, nes_racial2012)
 #' nes_m1 <- hgrm(y, x, z)
 #' coef(nes_m1)
 coef.hIRT <- function(object, digits = 3, ...) {
@@ -67,9 +67,9 @@ coef_var <- function(x, digits = 3) {
 #'
 #' @export
 #' @examples
-#' y <- nes_econ2012[, -(1:3)]
-#' x <- model.matrix( ~ party * educ, nes_econ2012)
-#' z <- model.matrix( ~ party, nes_econ2012)
+#' y <- nes_racial2012[, -(1:3)]
+#' x <- model.matrix( ~ party * educ, nes_racial2012)
+#' z <- model.matrix( ~ party, nes_racial2012)
 #' nes_m1 <- hgrm(y, x, z)
 #' coef_item(nes_m1)
 

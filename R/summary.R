@@ -17,9 +17,9 @@
 #'
 #' @export
 #' @examples
-#' y <- nes_econ2012[, -(1:3)]
-#' x <- model.matrix( ~ party * educ, nes_econ2012)
-#' z <- model.matrix( ~ party, nes_econ2012)
+#' y <- nes_racial2012[, -(1:3)]
+#' x <- model.matrix( ~ party * educ, nes_racial2012)
+#' z <- model.matrix( ~ party, nes_racial2012)
 #' nes_m1 <- hgrm(y, x, z)
 #' summary(nes_m1, by_item = TRUE)
 
