@@ -17,5 +17,6 @@
 #'   \item{FS_welfare3}{Federal spending on welfare, 3 categories}
 #'   \item{FS_envir3}{Federal spending on environment, 3 categories}
 #'   \item{FS_socsec3}{Federal spending on Social Security, 3 categories}
+#'   }
 "nes_econ2008"
 
