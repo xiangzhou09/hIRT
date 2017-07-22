@@ -29,9 +29,9 @@ Item parameter estimates, standard errors, z values, and p values
 Item parameter estimates from either \code{hltm} or \code{hgrm} models.
 }
 \examples{
-y <- nes_racial2008[, -(1:3)]
-x <- model.matrix( ~ party * educ, nes_racial2008)
-z <- model.matrix( ~ party, nes_racial2008)
+y <- nes_econ2008[, -(1:3)]
+x <- model.matrix( ~ party * educ, nes_econ2008)
+z <- model.matrix( ~ party, nes_econ2008)
 nes_m1 <- hgrm(y, x, z)
 coef_item(nes_m1)
 }

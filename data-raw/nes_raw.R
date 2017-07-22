@@ -34,21 +34,14 @@
 #   filter(nvalid_foreign >=1, nvalid_foreign_yr_level>=3) %>%
 #   dplyr::select(year, gender,  party, educ, urss_coop7:FS_space3)
 #
-# nes_econ2012 <- subset(nes_econ, year == 2012) %>%
+# nes_econ2008 <- subset(nes_econ, year == 2008) %>%
 #   dplyr::select(-year, -FS_aids3, -FS_aidcollege3, -FS_homeless3,
 #                 -FS_foodstamps3, -FS_assistblacks3) %>%
 #   mutate(party = factor(party, levels = 1:3,
 #                         labels = c("Democrat", "independent",
 #                                    "Republican")))
+# summary(nes_econ2008)
 #
-# nes_racial2008 <- subset(nes_civil, year == 2008) %>%
-#   dplyr::select(gender, party, educ,
-#                 hard_blacks5, no_favor_blacks5,
-#                 blacks_try_harder5, blacks_deserve_more5) %>%
-#   mutate(party = factor(party, levels = 1:3,
-#                         labels = c("Democrat", "independent",
-#                                    "Republican")))
+# dim(nes_econ2008)
 #
-# summary(nes_racial2008)
-#
-# use_data(nes_racial2008, overwrite = TRUE)
+# use_data(nes_econ2008, overwrite = TRUE)

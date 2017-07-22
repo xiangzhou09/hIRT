@@ -34,9 +34,9 @@ An object of class \code{summary_hIRT}.
 Summarizing the fit of either \code{hltm} or \code{hgrm}.
 }
 \examples{
-y <- nes_racial2012[, -(1:3)]
-x <- model.matrix( ~ party * educ, nes_racial2012)
-z <- model.matrix( ~ party, nes_racial2012)
+y <- nes_econ2008[, -(1:3)]
+x <- model.matrix( ~ party * educ, nes_econ2008)
+z <- model.matrix( ~ party, nes_econ2008)
 nes_m1 <- hgrm(y, x, z)
 summary(nes_m1, by_item = TRUE)
 }
