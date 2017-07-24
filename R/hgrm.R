@@ -21,21 +21,22 @@
 #' @param control A list of control values
 #' \describe{
 #'  \item{max_iter}{The maximum number of iterations of the EM algorithm.
-#'    Default set to 150.}
+#'    Default 150.}
 #'  \item{eps}{Tolerance parameter used to determine convergence of the
 #'   EM algorithm. Specifically, iterations continue until the Euclidean
 #'   distance between \eqn{\beta_{n}} and \eqn{\beta_{n-1}} falls under \code{eps},
 #'   where \eqn{\beta} is the vector of item discrimination parameters.
-#'   \code{eps} is set to 1e-4 by default.}
+#'   \code{eps}=1e-4 by default.}
 #'  \item{max_iter2}{The maximum number of iterations of the conditional
 #'    maximization procedures for updating \eqn{\gamma} and \eqn{\lambda}.
-#'    Default set to 15.}
+#'    Default 15.}
 #'  \item{eps2}{Tolerance parameter used to determine convergence of the
 #'    conditional maximization procedures for updating \eqn{\gamma} and
 #'    \eqn{\lambda}. Specifically, iterations continue until the Euclidean
 #'   distance between two consecutive log likelihoods falls under \code{eps2}.
-#'   \code{eps2} is set to 1e-3 by default.}
-#'  \item{K}{Number of Gauss-Hermite quadrature points for the E-step. Default 21.}
+#'   \code{eps2}=1e-3 by default.}
+#'  \item{K}{Number of Gauss–Legendre quadrature points for the E-step. Default 21.}
+#'  \item{C}{[-C, C] sets the range of integral in the E-step. \code{C}=5 by default.}
 #' }
 #'
 #' @return An object of class \code{hgrm}.
@@ -50,6 +51,8 @@
 #'  \item{q}{The number of predictors for the variance equation.}
 #'  \item{item_names}{Names of items.}
 #'  \item{call}{The matched call.}
+#' @references Zhou, Xiang. 2017. “Hierarchical Item Response Models for Analyzing Public Opinion”
+#'   Working Paper.
 #' @importFrom rms lrm.fit
 #' @importFrom pryr compose
 #' @importFrom pryr partial
@@ -98,7 +101,7 @@ hgrm <- function(y, x = matrix(1, nrow(y), 1), z = x,
 
     # control parameters
     con <- list(max_iter = 150, max_iter2 = 15, eps = 1e-04, eps2 = 0.001,
-        K = 21)  # control parameters
+        K = 21, C = 5)  # control parameters
     con[names(control)] <- control
 
     # dimensions, response categories, etc.
@@ -112,8 +115,8 @@ hgrm <- function(y, x = matrix(1, nrow(y), 1), z = x,
 
     # GH points
     K <- con[["K"]]
-    theta_ls <- gh[[K]][["x"]]
-    qw_ls <- gh[[K]][["w"]]
+    theta_ls <- C * GLpoints[[K]][["x"]]
+    qw_ls <- C * GLpoints[[K]][["w"]]
 
     # initialization
     theta_eap <- {

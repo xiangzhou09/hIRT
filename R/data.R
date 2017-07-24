@@ -1,6 +1,6 @@
 #' Public Attitudes on Economic Issues in ANES 2008
 #'
-#' A dataset containing party ID, education, and responses to 10 survey items
+#' A dataset containing gender, party ID, education, and responses to 10 survey items
 #' on economic issues from the American National Election Studies, 2008.
 #'
 #' @format A data frame with 2268 rows and 13 variables: \describe{

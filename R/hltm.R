@@ -21,6 +21,8 @@
 #'  \item{q}{The number of predictors for the variance equation.}
 #'  \item{item_names}{Names of items.}
 #'  \item{call}{The matched call.}
+#' @references Zhou, Xiang. 2017. “Hierarchical Item Response Models for Analyzing Public Opinion”
+#'   Working Paper.
 #' @importFrom rms lrm.fit
 #' @importFrom pryr compose
 #' @importFrom pryr partial
@@ -73,7 +75,7 @@ hltm <- function(y, x = matrix(1, nrow(y), 1), z = x,
 
     # control parameters
     con <- list(max_iter = 150, max_iter2 = 15, eps = 1e-04, eps2 = 0.001,
-        K = 21)  # control parameters
+        K = 21, C = 5)  # control parameters
     con[names(control)] <- control
 
     # dimensions, response categories, etc.
@@ -86,8 +88,8 @@ hltm <- function(y, x = matrix(1, nrow(y), 1), z = x,
 
     # GH points
     K <- con[["K"]]
-    theta_ls <- gh[[K]][["x"]]
-    qw_ls <- gh[[K]][["w"]]
+    theta_ls <- C * GLpoints[[K]][["x"]]
+    qw_ls <- C * GLpoints[[K]][["w"]]
 
     # initialization
     theta_eap <- {
