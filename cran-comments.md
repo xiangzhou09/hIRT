@@ -6,19 +6,26 @@
 
 0 errors | 0 warnings | 2 notes
 
-* New submission. Possibly mis-spelled words in DESCRIPTION: IRT (3:43, 8:11) covariates (9:47)
+* Days since last update: 1
+(There was an important bug on quadrature points in the previous release.)
 
+Possibly mis-spelled words in DESCRIPTION:
+  IRT (8:11)
+  covariates (9:47)
 (These words are not mis-spelled)
 
 * Examples with CPU or elapsed time > 10s
-                 user system elapsed
-  coef.hIRT     10.41   0.05   10.50
-  latent_scores 10.17   0.00   10.24
+               user system elapsed
+coef.hIRT     11.79   0.02   11.80
+latent_scores 11.50   0.03   11.53
+summary.hIRT  10.70   0.01   10.72
+hgrm          10.49   0.02   10.50
+coef_item     10.44   0.01   10.47
 
 (These examples take only slightly more than 10s.)
 
-## Reverse dependencies
+## Downstream dependencies
 
-This is a new release, so there are no reverse dependencies.
+There are currently no downstream dependencies for this package.
 
 ---
