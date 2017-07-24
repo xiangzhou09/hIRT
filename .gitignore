@@ -1,3 +1,5 @@
+^\.Rproj\.user$
+^cran-comments\.md$
 .Rproj.user
 .Rhistory
 .RData
