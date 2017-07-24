@@ -4,8 +4,8 @@
 \alias{hgrm}
 \title{Fitting Hierarchical Graded Response Models}
 \usage{
-hgrm(y, x = matrix(1, nrow(y), 1), z = x, beta_set = 1, sign_set = TRUE,
-  control = list())
+hgrm(y, x = matrix(1, nrow(y), 1), z = matrix(1, nrow(y), 1),
+  beta_set = 1, sign_set = TRUE, control = list())
 }
 \arguments{
 \item{y}{A data frame or matrix of item responses.}
