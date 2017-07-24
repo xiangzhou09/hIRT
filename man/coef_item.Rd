@@ -6,7 +6,7 @@
 \alias{coef_item.hltm}
 \title{Extracting Estimates of Item Parameters from Hierarchical IRT Models.}
 \usage{
-coef_item(x, by_item = TRUE, digits = 3)
+coef_item(x, ...)
 
 \method{coef_item}{hgrm}(x, by_item = TRUE, digits = 3)
 
@@ -14,6 +14,8 @@ coef_item(x, by_item = TRUE, digits = 3)
 }
 \arguments{
 \item{x}{An object of class \code{hIRT}}
+
+\item{...}{further arguments passed to or from other methods}
 
 \item{by_item}{Logical. Should item parameters be stored item by item
 (if \code{TRUE}) or put together in a data frame (if \code{FALSE})?}

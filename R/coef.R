@@ -73,7 +73,7 @@ coef_var <- function(x, digits = 3) {
 #' nes_m1 <- hgrm(y, x, z)
 #' coef_item(nes_m1)
 
-coef_item <- function(x, by_item = TRUE, digits = 3) UseMethod("coef_item")
+coef_item <- function(x, ...) UseMethod("coef_item")
 
 #' @export
 #' @rdname coef_item
