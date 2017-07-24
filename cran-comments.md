@@ -7,7 +7,7 @@
 0 errors | 0 warnings | 2 notes
 
 * Days since last update: 1
-(There was an important bug on quadrature points in the previous release.)
+(There was an important bug on quadrature integration in the previous release.)
 
 Possibly mis-spelled words in DESCRIPTION:
   IRT (8:11)
