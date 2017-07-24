@@ -113,7 +113,7 @@ hgrm <- function(y, x = matrix(1, nrow(y), 1), z = matrix(1, nrow(y), 1),
     z_names <- colnames(z)
     environment(loglik_grm) <- environment(theta_post_grm) <- environment(dummy_fun_grm) <- environment(tab2df_grm) <- environment()
 
-    # GH points
+    # GL points
     K <- con[["K"]]
     theta_ls <- con[["C"]] * GLpoints[[K]][["x"]]
     qw_ls <- con[["C"]] * GLpoints[[K]][["w"]]

@@ -86,7 +86,7 @@ hltm <- function(y, x = matrix(1, nrow(y), 1), z = matrix(1, nrow(y), 1),
     z_names <- colnames(z)
     environment(loglik_ltm) <- environment(theta_post_ltm) <- environment(dummy_fun_ltm) <- environment(tab2df_ltm) <- environment()
 
-    # GH points
+    # GL points
     K <- con[["K"]]
     theta_ls <- con[["C"]] * GLpoints[[K]][["x"]]
     qw_ls <- con[["C"]] * GLpoints[[K]][["w"]]
