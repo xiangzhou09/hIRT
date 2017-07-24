@@ -41,11 +41,7 @@ the corresponding item (indexed by \code{beta_set}) be positive
    \eqn{\lambda}. Specifically, iterations continue until the Euclidean
   distance between two consecutive log likelihoods falls under \code{eps2}.
   \code{eps2}=1e-3 by default.}
-<<<<<<< HEAD
  \item{K}{Number of Gauss-Legendre quadrature points for the E-step. Default 21.}
-=======
- \item{K}{Number of Gauss–Legendre quadrature points for the E-step. Default 21.}
->>>>>>> 28f16843a7eede60726adf85c82e4592c54bc16c
  \item{C}{[-C, C] sets the range of integral in the E-step. \code{C}=5 by default.}
 }}
 }
@@ -85,10 +81,6 @@ nes_m1 <- hltm(y_bin, x, z)
 print(nes_m1)
 }
 \references{
-<<<<<<< HEAD
 Zhou, Xiang. 2017. "Hierarchical Item Response Models for Analyzing Public Opinion."
-=======
-Zhou, Xiang. 2017. “Hierarchical Item Response Models for Analyzing Public Opinion”
->>>>>>> 28f16843a7eede60726adf85c82e4592c54bc16c
   Working Paper.
 }
