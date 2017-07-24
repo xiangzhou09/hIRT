@@ -16,11 +16,8 @@ Possibly mis-spelled words in DESCRIPTION:
 
 * Examples with CPU or elapsed time > 10s
                user system elapsed
-coef.hIRT     11.79   0.02   11.80
-latent_scores 11.50   0.03   11.53
-summary.hIRT  10.70   0.01   10.72
-hgrm          10.49   0.02   10.50
-coef_item     10.44   0.01   10.47
+latent_scores 10.19   0.03   10.21
+coef.hIRT     10.13   0.00   10.12
 
 (These examples take only slightly more than 10s.)
 

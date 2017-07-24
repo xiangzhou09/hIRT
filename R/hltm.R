@@ -41,7 +41,7 @@
 #' nes_m1 <- hltm(y_bin, x, z)
 #' print(nes_m1)
 
-hltm <- function(y, x = matrix(1, nrow(y), 1), z = x,
+hltm <- function(y, x = matrix(1, nrow(y), 1), z = matrix(1, nrow(y), 1),
     beta_set = 1, sign_set = TRUE, control = list()) {
 
     # match call

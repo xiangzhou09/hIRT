@@ -65,7 +65,7 @@
 #' nes_m1 <- hgrm(y, x, z)
 #' print(nes_m1)
 
-hgrm <- function(y, x = matrix(1, nrow(y), 1), z = x,
+hgrm <- function(y, x = matrix(1, nrow(y), 1), z = matrix(1, nrow(y), 1),
     beta_set = 1, sign_set = TRUE, control = list()) {
 
     # match call
