@@ -23,7 +23,7 @@
 nes_econ2008
 }
 \description{
-A dataset containing party ID, education, and responses to 10 survey items
+A dataset containing gender, party ID, education, and responses to 10 survey items
 on economic issues from the American National Election Studies, 2008.
 }
 \keyword{datasets}

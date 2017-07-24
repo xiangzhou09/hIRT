@@ -35,7 +35,7 @@
 #'    \eqn{\lambda}. Specifically, iterations continue until the Euclidean
 #'   distance between two consecutive log likelihoods falls under \code{eps2}.
 #'   \code{eps2}=1e-3 by default.}
-#'  \item{K}{Number of Gauss–Legendre quadrature points for the E-step. Default 21.}
+#'  \item{K}{Number of Gauss-Legendre quadrature points for the E-step. Default 21.}
 #'  \item{C}{[-C, C] sets the range of integral in the E-step. \code{C}=5 by default.}
 #' }
 #'
