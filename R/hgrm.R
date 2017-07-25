@@ -128,7 +128,7 @@ hgrm <- function(y, x = matrix(1, nrow(y), 1), z = matrix(1, nrow(y), 1),
         -Inf))
     beta <- vapply(y, function(y) cov(y, theta_eap, use = "complete.obs")/var(theta_eap),
         numeric(1L))
-    gamma <- solve(t(x) %*% x) %*% t(x) %*% theta_eap
+    gamma <- .lm.fit(x = x, y = theta_eap)[["coefficients"]]
     lambda <- rep(0, q)
 
     # EM algorithm
@@ -158,25 +158,28 @@ hgrm <- function(y, x = matrix(1, nrow(y), 1), z = matrix(1, nrow(y), 1),
         theta_vap <- t(theta_ls^2 %*% w) - theta_eap^2
 
         # variance regression
-        gamma <- solve(t(x) %*% x) %*% t(x) %*% theta_eap
+        gamma <- .lm.fit(x = x, y = theta_eap)[["coefficients"]]
         r2 <- (theta_eap - x %*% gamma)^2 + theta_vap
-        s2 <- glm.fit(x = z, y = r2, intercept = FALSE, family = Gamma(link = "log"))[["fitted.values"]]
-        loglik <- -0.5 * (log(s2) + r2/s2)
-        LL0 <- sum(loglik)
-        dLL <- 1
-        for (m in seq(1, con[["max_iter2"]])) {
-            gamma <- lm(theta_eap ~ 0 + x, weights = 1/s2)[["coefficients"]]
-            r2 <- (theta_eap - x %*% gamma)^2 + theta_vap
-            var_reg <- glm.fit(x = z, y = r2, intercept = FALSE, family = Gamma(link = "log"))
-            s2 <- var_reg[["fitted.values"]]
-            loglik <- -0.5 * (log(s2) + r2/s2)
-            LL_temp <- sum(loglik)
-            dLL <- LL_temp - LL0
-            if (dLL < con[["eps2"]])
-                break
-            LL0 <- LL_temp
+
+        if (ncol(z)==1) lambda <- log(mean(r2)) else{
+          s2 <- glm.fit(x = z, y = r2, intercept = FALSE, family = Gamma(link = "log"))[["fitted.values"]]
+          loglik <- -0.5 * (log(s2) + r2/s2)
+          LL0 <- sum(loglik)
+          dLL <- 1
+          for (m in seq(1, con[["max_iter2"]])) {
+              gamma <- lm.wfit(x, theta_eap, w = 1/s2)[["coefficients"]]
+              r2 <- (theta_eap - x %*% gamma)^2 + theta_vap
+              var_reg <- glm.fit(x = z, y = r2, intercept = FALSE, family = Gamma(link = "log"))
+              s2 <- var_reg[["fitted.values"]]
+              loglik <- -0.5 * (log(s2) + r2/s2)
+              LL_temp <- sum(loglik)
+              dLL <- LL_temp - LL0
+              if (dLL < con[["eps2"]])
+                  break
+              LL0 <- LL_temp
+          }
+          lambda <- var_reg[["coefficients"]]
         }
-        lambda <- var_reg[["coefficients"]]
 
         # location constraint
         tmp <- mean(x %*% gamma)
