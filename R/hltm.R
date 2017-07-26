@@ -101,7 +101,7 @@ hltm <- function(y, x = matrix(1, nrow(y), 1), z = matrix(1, nrow(y), 1),
     alpha <- rep(0, J)
     beta <- vapply(y, function(y) cov(y, theta_eap, use = "complete.obs")/var(theta_eap),
         numeric(1L))
-    gamma <- solve(t(x) %*% x) %*% t(x) %*% theta_eap
+    gamma <- .lm.fit(x = x, y = theta_eap)[["coefficients"]]
     lambda <- rep(0, q)
 
     # EM algorithm
@@ -209,7 +209,7 @@ hltm <- function(y, x = matrix(1, nrow(y), 1), z = matrix(1, nrow(y), 1),
         s_lambda <- vapply(1:N, si_lambda, numeric(q - 1))
     s_all <- rbind(t(s_ab), s_gamma, s_lambda)
     s_all[is.na(s_all)] <- 0
-    covmat <- solve(s_all %*% t(s_all))
+    covmat <- tcrossprod(s_all)
     se_all <- sqrt(diag(covmat))
 
     # reorganize se_all

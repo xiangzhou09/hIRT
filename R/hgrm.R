@@ -160,7 +160,6 @@ hgrm <- function(y, x = matrix(1, nrow(y), 1), z = matrix(1, nrow(y), 1),
         # variance regression
         gamma <- .lm.fit(x = x, y = theta_eap)[["coefficients"]]
         r2 <- (theta_eap - x %*% gamma)^2 + theta_vap
-
         if (ncol(z)==1) lambda <- log(mean(r2)) else{
           s2 <- glm.fit(x = z, y = r2, intercept = FALSE, family = Gamma(link = "log"))[["fitted.values"]]
           loglik <- -0.5 * (log(s2) + r2/s2)
@@ -212,9 +211,8 @@ hgrm <- function(y, x = matrix(1, nrow(y), 1), z = matrix(1, nrow(y), 1),
     }
 
     # inference
-    pik <- matrix(unlist(Map(partial(dnorm, x = theta_ls), mean = as.vector(x %*%
-        gamma), sd = as.vector(exp(z %*% lambda)))), N, K, byrow = TRUE) *
-        matrix(qw_ls, N, K, byrow = TRUE)
+    pik <- matrix(unlist(Map(pryr::partial(dnorm, x = theta_ls), mean = as.vector(x %*% gamma),
+                             sd = as.vector(exp(z %*% lambda)))), N, K, byrow = TRUE) * matrix(qw_ls, N, K, byrow = TRUE)
     Lijk <- lapply(theta_ls, function(theta_k) exp(loglik_grm(alpha = alpha,
         beta = beta, rep(theta_k, N))))  # K-list
     Lik <- vapply(Lijk, compose(exp, partial(rowSums, na.rm = TRUE),
@@ -234,7 +232,7 @@ hgrm <- function(y, x = matrix(1, nrow(y), 1), z = matrix(1, nrow(y), 1),
         s_lambda <- vapply(1:N, si_lambda, numeric(q - 1))
     s_all <- rbind(s_ab, s_gamma, s_lambda)
     s_all[is.na(s_all)] <- 0
-    covmat <- solve(s_all %*% t(s_all))
+    covmat <- tcrossprod(s_all)
     se_all <- sqrt(diag(covmat))
 
     # reorganize se_all
