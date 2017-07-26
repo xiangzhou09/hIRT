@@ -17,8 +17,7 @@ loglik_grm <- function(alpha, beta, theta) {
 # length J numeric vector gamma: p-vector lambda: q-vector theta_k:
 # numeric scalar qw_k numeric scalar
 theta_post_grm <- function(theta_k, qw_k) {
-    wt_k <- dnorm(theta_k - x %*% gamma, sd = sqrt(exp(z %*% lambda))) *
-        qw_k  # prior density * quadrature weight
+    wt_k <- dnorm(theta_k - fitted_mean, sd = sqrt(fitted_var)) * qw_k  # prior density * quadrature weight
     loglik <- rowSums(loglik_grm(alpha, beta, rep(theta_k, N)), na.rm = TRUE)
     logPop <- log(wt_k)
     exp(loglik + logPop)

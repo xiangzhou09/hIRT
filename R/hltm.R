@@ -67,8 +67,8 @@ hltm <- function(y, x = matrix(1, nrow(y), 1), z = matrix(1, nrow(y), 1),
         z <- as.matrix(z)
     if (nrow(x) != N || nrow(z) != N)
         stop("both 'x' and 'z' must have the same number of rows as 'y'")
-    x <- `colnames<-`(model.matrix(~0 + x), colnames(x))
-    z <- `colnames<-`(model.matrix(~0 + z), colnames(z))
+    x <- `colnames<-`(model.matrix(~ 0 + x), colnames(x))
+    z <- `colnames<-`(model.matrix(~ 0 + z), colnames(z))
 
     # check beta_set and sign_set
     stopifnot(beta_set %in% 1:J, is.logical(sign_set))
@@ -92,17 +92,19 @@ hltm <- function(y, x = matrix(1, nrow(y), 1), z = matrix(1, nrow(y), 1),
     qw_ls <- con[["C"]] * GLpoints[[K]][["w"]]
 
     # initialization
+    lm_opr <- tcrossprod(solve(crossprod(x)), x)
     theta_eap <- {
         tmp <- rowMeans(y, na.rm = TRUE)
         (tmp - mean(tmp, na.rm = TRUE))/sd(tmp, na.rm = TRUE)
     }
     theta_eap[is.na(theta_eap)] <- 0
-
     alpha <- rep(0, J)
     beta <- vapply(y, function(y) cov(y, theta_eap, use = "complete.obs")/var(theta_eap),
         numeric(1L))
-    gamma <- .lm.fit(x = x, y = theta_eap)[["coefficients"]]
+    gamma <- lm_opr %*% theta_eap
     lambda <- rep(0, q)
+    fitted_mean <- as.vector(x %*% gamma)
+    fitted_var <- rep(1, N)
 
     # EM algorithm
     for (iter in seq(1, con[["max_iter"]])) {
@@ -131,7 +133,7 @@ hltm <- function(y, x = matrix(1, nrow(y), 1), z = matrix(1, nrow(y), 1),
         theta_vap <- t(theta_ls^2 %*% w) - theta_eap^2
 
         # variance regression
-        gamma <- .lm.fit(x = x, y = theta_eap)[["coefficients"]]
+        gamma <- lm_opr %*% theta_eap
         r2 <- (theta_eap - x %*% gamma)^2 + theta_vap
 
         if (ncol(z)==1) lambda <- log(mean(r2)) else{
@@ -170,6 +172,8 @@ hltm <- function(y, x = matrix(1, nrow(y), 1), z = matrix(1, nrow(y), 1),
             gamma <- -gamma
             beta <- -beta
         }
+        fitted_mean <- as.vector(x %*% gamma)
+        fitted_var <- exp(as.vector(z %*% lambda))
         cat(".")
 
         # check convergence
@@ -185,9 +189,8 @@ hltm <- function(y, x = matrix(1, nrow(y), 1), z = matrix(1, nrow(y), 1),
     }
 
     # inference
-    pik <- matrix(unlist(Map(pryr::partial(dnorm, x = theta_ls), mean = as.vector(x %*%
-        gamma), sd = as.vector(exp(z %*% lambda)))), N, K, byrow = TRUE) *
-        matrix(qw_ls, N, K, byrow = TRUE)
+    pik <- matrix(unlist(Map(pryr::partial(dnorm, x = theta_ls), mean = fitted_mean,
+                             sd = sqrt(fitted_var))), N, K, byrow = TRUE) * matrix(qw_ls, N, K, byrow = TRUE)
     Lijk <- lapply(theta_ls, function(theta_k) exp(loglik_ltm(alpha = alpha,
         beta = beta, rep(theta_k, N))))  # K-list
     Lik <- vapply(Lijk, pryr::compose(exp, pryr::partial(rowSums, na.rm = TRUE),
@@ -209,7 +212,7 @@ hltm <- function(y, x = matrix(1, nrow(y), 1), z = matrix(1, nrow(y), 1),
         s_lambda <- vapply(1:N, si_lambda, numeric(q - 1))
     s_all <- rbind(t(s_ab), s_gamma, s_lambda)
     s_all[is.na(s_all)] <- 0
-    covmat <- tcrossprod(s_all)
+    covmat <- solve(tcrossprod(s_all))
     se_all <- sqrt(diag(covmat))
 
     # reorganize se_all
