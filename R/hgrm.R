@@ -85,6 +85,7 @@ hgrm <- function(y, x = matrix(1, nrow(y), 1), z = matrix(1, nrow(y), 1),
       stop(paste(names(y)[tmp], "does not have at least two valid responses"))
     if(max(y, na.rm = TRUE)==2)
       stop("All items are dichotomous. Use 'hltm' ")
+    H <- vapply(y, max, numeric(1), na.rm = TRUE)
 
     # check x and z (x and z should contain an intercept column)
     if (is.null(nrow(x)))
@@ -93,8 +94,10 @@ hgrm <- function(y, x = matrix(1, nrow(y), 1), z = matrix(1, nrow(y), 1),
         z <- as.matrix(z)
     if (nrow(x) != N || nrow(z) != N)
         stop("both 'x' and 'z' must have the same number of rows as 'y'")
-    x <- `colnames<-`(model.matrix(~ 0 + x), colnames(x))
-    z <- `colnames<-`(model.matrix(~ 0 + z), colnames(z))
+    p <- ncol(x)
+    q <- ncol(z)
+    x <- `colnames<-`(model.matrix(~ 0 + x), colnames(x) %||% paste("x", 1:p, sep = ""))
+    z <- `colnames<-`(model.matrix(~ 0 + z), colnames(z) %||% paste("z", 1:q, sep = ""))
 
     # check beta_set and sign_set
     stopifnot(beta_set %in% 1:J, is.logical(sign_set))
@@ -104,13 +107,7 @@ hgrm <- function(y, x = matrix(1, nrow(y), 1), z = matrix(1, nrow(y), 1),
         K = 21, C = 5)  # control parameters
     con[names(control)] <- control
 
-    # dimensions, response categories, etc.
-    H <- vapply(y, max, numeric(1), na.rm = TRUE)
-    p <- ncol(x)
-    q <- ncol(z)
-    y_names <- names(y)
-    x_names <- colnames(x)
-    z_names <- colnames(z)
+    # set environments for utility functions
     environment(loglik_grm) <- environment(theta_post_grm) <- environment(dummy_fun_grm) <- environment(tab2df_grm) <- environment()
 
     # GL points
@@ -216,7 +213,7 @@ hgrm <- function(y, x = matrix(1, nrow(y), 1), z = matrix(1, nrow(y), 1),
     }
 
     # inference
-    pik <- matrix(unlist(Map(pryr::partial(dnorm, x = theta_ls), mean = fitted_mean,
+    pik <- matrix(unlist(Map(partial(dnorm, x = theta_ls), mean = fitted_mean,
                              sd = sqrt(fitted_var))), N, K, byrow = TRUE) * matrix(qw_ls, N, K, byrow = TRUE)
     Lijk <- lapply(theta_ls, function(theta_k) exp(loglik_grm(alpha = alpha,
         beta = beta, rep(theta_k, N))))  # K-list
@@ -259,8 +256,7 @@ hgrm <- function(y, x = matrix(1, nrow(y), 1), z = matrix(1, nrow(y), 1),
         names(lambda)[-1L])
 
     # item coefficients
-    coef_item <- Map(function(a, b) c(a[-c(1L, length(a))], Dscrmn = b),
-        alpha, beta)
+    coef_item <- Map(function(a, b) c(a[-c(1L, length(a))], Dscrmn = b), alpha, beta)
 
     # all coefficients
     coef_all <- c(unlist(coef_item), gamma, lambda)

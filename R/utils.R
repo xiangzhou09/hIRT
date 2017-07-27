@@ -5,6 +5,9 @@ utils::globalVariables(c("H", "J", "K", "Li", "Lijk", "Lik", "N",
 # convert original response data to integers
 fac2int <- function(x) as.integer(factor(x, exclude = c(NA, NaN)))
 
+# logical or infix function
+`%||%` <- function(a, b) if (!is.null(a)) a else b
+
 # calculate gamma gradient for case i
 si_gamma <- function(i) {
     sum(pik[i, ] * Lik[i, ] * (theta_ls - fitted_mean[i]))/

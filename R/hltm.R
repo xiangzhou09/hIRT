@@ -67,8 +67,10 @@ hltm <- function(y, x = matrix(1, nrow(y), 1), z = matrix(1, nrow(y), 1),
         z <- as.matrix(z)
     if (nrow(x) != N || nrow(z) != N)
         stop("both 'x' and 'z' must have the same number of rows as 'y'")
-    x <- `colnames<-`(model.matrix(~ 0 + x), colnames(x))
-    z <- `colnames<-`(model.matrix(~ 0 + z), colnames(z))
+    p <- ncol(x)
+    q <- ncol(z)
+    x <- `colnames<-`(model.matrix(~ 0 + x), colnames(x) %||% paste("x", 1:p, sep = ""))
+    z <- `colnames<-`(model.matrix(~ 0 + z), colnames(z) %||% paste("z", 1:q, sep = ""))
 
     # check beta_set and sign_set
     stopifnot(beta_set %in% 1:J, is.logical(sign_set))
@@ -78,12 +80,7 @@ hltm <- function(y, x = matrix(1, nrow(y), 1), z = matrix(1, nrow(y), 1),
         K = 21, C = 5)  # control parameters
     con[names(control)] <- control
 
-    # dimensions, response categories, etc.
-    p <- ncol(x)
-    q <- ncol(z)
-    y_names <- names(y)
-    x_names <- colnames(x)
-    z_names <- colnames(z)
+    # set environments for utility functions
     environment(loglik_ltm) <- environment(theta_post_ltm) <- environment(dummy_fun_ltm) <- environment(tab2df_ltm) <- environment()
 
     # GL points
@@ -189,11 +186,11 @@ hltm <- function(y, x = matrix(1, nrow(y), 1), z = matrix(1, nrow(y), 1),
     }
 
     # inference
-    pik <- matrix(unlist(Map(pryr::partial(dnorm, x = theta_ls), mean = fitted_mean,
+    pik <- matrix(unlist(Map(partial(dnorm, x = theta_ls), mean = fitted_mean,
                              sd = sqrt(fitted_var))), N, K, byrow = TRUE) * matrix(qw_ls, N, K, byrow = TRUE)
     Lijk <- lapply(theta_ls, function(theta_k) exp(loglik_ltm(alpha = alpha,
         beta = beta, rep(theta_k, N))))  # K-list
-    Lik <- vapply(Lijk, pryr::compose(exp, pryr::partial(rowSums, na.rm = TRUE),
+    Lik <- vapply(Lijk, compose(exp, partial(rowSums, na.rm = TRUE),
         log), numeric(N))
     Li <- rowSums(Lik * pik)
 
