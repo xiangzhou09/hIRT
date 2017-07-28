@@ -83,8 +83,8 @@ hgrm <- function(y, x = matrix(1, nrow(y), 1), z = matrix(1, nrow(y), 1),
     tmp <- match(TRUE, vapply(y, invalid_grm, logical(1L)))
     if (!is.na(tmp))
       stop(paste(names(y)[tmp], "does not have at least two valid responses"))
-    if(max(y, na.rm = TRUE)==2)
-      stop("All items are dichotomous. Use 'hltm' ")
+    # if(max(y, na.rm = TRUE)==2)
+    #   stop("All items are dichotomous. Use 'hltm' ")
     H <- vapply(y, max, numeric(1), na.rm = TRUE)
 
     # check x and z (x and z should contain an intercept column)
