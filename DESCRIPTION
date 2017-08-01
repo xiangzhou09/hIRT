@@ -1,14 +1,14 @@
 Package: hIRT
 Type: Package
 Title: Hierarchical Item Response Theory Models
-Version: 0.1.1
+Version: 0.1.2
 Authors@R: person("Xiang", "Zhou", email = "xiang_zhou@fas.harvard.edu",
   role = c("aut", "cre"))
 Description: Implementation of a class of hierarchical item response
   theory (IRT) models where both the mean and the variance of latent preferences
-  (ability parameters) can depend on observed covariates. The current
-  implementation includes both the two-parameter latent trait model and the
-  graded response model. Both are fitted via the Expectation-Maximization (EM)
+  (ability parameters) may depend on observed covariates. The current
+  implementation includes both the two-parameter latent trait model for binary data and the
+  graded response model for ordinal data. Both are fitted via the Expectation-Maximization (EM)
   algorithm. Asymptotic standard errors are derived from the observed information
   matrix. 
 Depends:
