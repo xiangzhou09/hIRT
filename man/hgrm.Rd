@@ -4,19 +4,18 @@
 \alias{hgrm}
 \title{Fitting Hierarchical Graded Response Models}
 \usage{
-hgrm(y, x = matrix(1, nrow(y), 1), z = matrix(1, nrow(y), 1),
-  beta_set = 1, sign_set = TRUE, control = list())
+hgrm(y, x, z, beta_set = 1, sign_set = TRUE, control = list())
 }
 \arguments{
 \item{y}{A data frame or matrix of item responses.}
 
-\item{x}{A matrix of covariates, including intercept, that predict the
-mean of the latent preference.}
+\item{x}{An optional model matrix, including the intercept term, that predicts the
+mean of the latent preference. If missing, only the intercept term is included.}
 
-\item{z}{A matrix of covariates, including intercept, that predict the
-variance of the latent preference.}
+\item{z}{An optional model matrix, including the intercept term, that predicts the
+variance of the latent preference. If missing, only the intercept term is included.}
 
-\item{beta_set}{The index of the item whose discrimination parameter is
+\item{beta_set}{The index of the item for which the discrimination parameter is
 restricted to be positive (or negative). It may take an integer value from
 1 to \code{ncol(y)}.}
 
@@ -75,6 +74,6 @@ nes_m1 <- hgrm(y, x, z)
 print(nes_m1)
 }
 \references{
-Zhou, Xiang. 2017. "Hierarchical Item Response Models for Analyzing Public Opinion."
+Zhou, Xiang. 2018. "Hierarchical Item Response Models for Analyzing Public Opinion."
   Working Paper.
 }

@@ -41,8 +41,7 @@
 #' nes_m1 <- hltm(y_bin, x, z)
 #' print(nes_m1)
 
-hltm <- function(y, x = matrix(1, nrow(y), 1), z = matrix(1, nrow(y), 1),
-    beta_set = 1, sign_set = TRUE, control = list()) {
+hltm <- function(y, x, z, beta_set = 1, sign_set = TRUE, control = list()) {
 
     # match call
     cl <- match.call()
@@ -61,10 +60,10 @@ hltm <- function(y, x = matrix(1, nrow(y), 1), z = matrix(1, nrow(y), 1),
       stop(paste(names(y)[tmp], "is not a dichotomous variable"))
 
     # check x and z (x and z should contain an intercept column)
-    if (is.null(nrow(x)))
-        x <- as.matrix(x)
-    if (is.null(nrow(x)))
-        z <- as.matrix(z)
+    if (missing(x)) x <- as.matrix(rep(1, N))
+    if (missing(z)) z <- as.matrix(rep(1, N))
+    if (is.null(nrow(x))) x <- as.matrix(x)
+    if (is.null(nrow(x))) z <- as.matrix(z)
     if (nrow(x) != N || nrow(z) != N)
         stop("both 'x' and 'z' must have the same number of rows as 'y'")
     p <- ncol(x)

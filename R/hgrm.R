@@ -8,11 +8,11 @@
 #' \code{z}. Nonresponses are treated as missing at random.
 #'
 #' @param y A data frame or matrix of item responses.
-#' @param x A matrix of covariates, including intercept, that predict the
-#'   mean of the latent preference.
-#' @param z A matrix of covariates, including intercept, that predict the
-#'   variance of the latent preference.
-#' @param beta_set The index of the item whose discrimination parameter is
+#' @param x An optional model matrix, including the intercept term, that predicts the
+#'   mean of the latent preference. If missing, only the intercept term is included.
+#' @param z An optional model matrix, including the intercept term, that predicts the
+#'   variance of the latent preference. If missing, only the intercept term is included.
+#' @param beta_set The index of the item for which the discrimination parameter is
 #'   restricted to be positive (or negative). It may take an integer value from
 #'   1 to \code{ncol(y)}.
 #' @param sign_set Logical. Should the discrimination parameter of
@@ -51,7 +51,7 @@
 #'  \item{q}{The number of predictors for the variance equation.}
 #'  \item{item_names}{Names of items.}
 #'  \item{call}{The matched call.}
-#' @references Zhou, Xiang. 2017. "Hierarchical Item Response Models for Analyzing Public Opinion."
+#' @references Zhou, Xiang. 2018. "Hierarchical Item Response Models for Analyzing Public Opinion."
 #'   Working Paper.
 #' @importFrom rms lrm.fit
 #' @importFrom pryr compose
@@ -65,8 +65,7 @@
 #' nes_m1 <- hgrm(y, x, z)
 #' print(nes_m1)
 
-hgrm <- function(y, x = matrix(1, nrow(y), 1), z = matrix(1, nrow(y), 1),
-    beta_set = 1, sign_set = TRUE, control = list()) {
+hgrm <- function(y, x, z, beta_set = 1, sign_set = TRUE, control = list()) {
 
     # match call
     cl <- match.call()
@@ -88,10 +87,10 @@ hgrm <- function(y, x = matrix(1, nrow(y), 1), z = matrix(1, nrow(y), 1),
     H <- vapply(y, max, numeric(1), na.rm = TRUE)
 
     # check x and z (x and z should contain an intercept column)
-    if (is.null(nrow(x)))
-        x <- as.matrix(x)
-    if (is.null(nrow(x)))
-        z <- as.matrix(z)
+    if (missing(x)) x <- as.matrix(rep(1, N))
+    if (missing(z)) z <- as.matrix(rep(1, N))
+    if (is.null(nrow(x))) x <- as.matrix(x)
+    if (is.null(nrow(x))) z <- as.matrix(z)
     if (nrow(x) != N || nrow(z) != N)
         stop("both 'x' and 'z' must have the same number of rows as 'y'")
     p <- ncol(x)
@@ -104,7 +103,7 @@ hgrm <- function(y, x = matrix(1, nrow(y), 1), z = matrix(1, nrow(y), 1),
 
     # control parameters
     con <- list(max_iter = 150, max_iter2 = 15, eps = 1e-04, eps2 = 0.001,
-        K = 21, C = 5)  # control parameters
+        K = 21, C = 5)
     con[names(control)] <- control
 
     # set environments for utility functions
