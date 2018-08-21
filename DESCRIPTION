@@ -12,7 +12,7 @@ Description: Implementation of a class of hierarchical item response
   algorithm. Asymptotic standard errors are derived from the observed information
   matrix. 
 Depends:
-    R (>= 3.3.2),
+    R (>= 3.4.0),
     stats
 Imports:
     pryr (>= 0.1.2),
