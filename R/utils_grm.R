@@ -23,6 +23,13 @@ theta_post_grm <- function(theta_k, qw_k) {
     exp(loglik + logPop)
 }
 
+theta_prior_grm <- function(theta_k, qw_k) {
+  wt_k <- dnorm(theta_k - fitted_mean, sd = sqrt(fitted_var)) * qw_k  # prior density * quadrature weight
+  # loglik <- rowSums(loglik_grm(alpha, beta, rep(theta_k, N)), na.rm = TRUE)
+  logPop <- log(wt_k)
+  exp(logPop)
+}
+
 # pseudo tabulated data for item J (returns K*H_j matrix) y_j: N-vector
 # H_j: number of response categories for item j w: K*N matrix
 dummy_fun_grm <- function(y_j, H_j) {

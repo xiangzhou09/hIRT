@@ -9,7 +9,7 @@ latent_scores(x, digits = 3)
 \arguments{
 \item{x}{An object of class \code{hIRT}}
 
-\item{digits}{the number of significant digits to use when printing}
+\item{digits}{The number of significant digits to use when printing}
 }
 \value{
 A data frame of EAP estimates of latent preferences and their approximate standard errors.

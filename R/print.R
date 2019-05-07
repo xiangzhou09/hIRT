@@ -1,6 +1,6 @@
 #' Printing an object of class \code{hIRT}
 #' @param x An object of class \code{hIRT}
-#' @param digits the number of significant digits to use when printing
+#' @param digits The number of significant digits to use when printing
 #' @param ... further arguments passed to or from other methods
 #' @export
 print.hIRT <- function(x, digits = 3, ...) {

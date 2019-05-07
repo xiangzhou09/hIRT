@@ -2,9 +2,6 @@ utils::globalVariables(c("H", "J", "K", "Li", "Lijk", "Lik", "N",
                   "alpha", "dalpha", "lambda", "p", "q", "pik",
                   "theta_ls", "w", "x", "y", "z", "fitted_mean", "fitted_var"))
 
-# convert original response data to integers
-fac2int <- function(x) as.integer(factor(x, exclude = c(NA, NaN)))
-
 # logical or infix function
 `%||%` <- function(a, b) if (!is.null(a)) a else b
 

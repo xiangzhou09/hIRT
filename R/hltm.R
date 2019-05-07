@@ -16,10 +16,13 @@
 #'   their approximate standard errors.}
 #'  \item{vcov}{Variance-covariance matrix of parameter estimates.}
 #'  \item{log_Lik}{The log-likelihood value at convergence.}
-#'  \item{J}{The number of items.}
+#'  \item{N}{Number of units.}
+#'  \item{J}{Number of items.}
+#'  \item{H}{A vector denoting the number of response categories for each item.}
+#'  \item{ylevels}{A list showing the levels of the factorized response categories.}
 #'  \item{p}{The number of predictors for the mean equation.}
 #'  \item{q}{The number of predictors for the variance equation.}
-#'  \item{item_names}{Names of items.}
+#'  \item{control}{List of control values.}
 #'  \item{call}{The matched call.}
 #' @references Zhou, Xiang. 2017. "Hierarchical Item Response Models for Analyzing Public Opinion."
 #'   Working Paper.
@@ -54,10 +57,16 @@ hltm <- function(y, x, z, beta_set = 1, sign_set = TRUE, control = list()) {
     y <- as.data.frame(y)
     N <- nrow(y)
     J <- ncol(y)
-    for (j in seq(1, J)) y[[j]] <- fac2int(y[[j]]) - 1
+    yl <- vector(mode = "list", length = J)
+    for (j in seq(1, J)) {
+      tmp <- factor(y[[j]], exclude = c(NA, NaN))
+      yl[[j]] <- levels(tmp)
+      y[[j]] <- as.integer(tmp) - 1
+    }
     tmp <- match(TRUE, vapply(y, invalid_ltm, logical(1L)))
     if (!is.na(tmp))
       stop(paste(names(y)[tmp], "is not a dichotomous variable"))
+    H <- vapply(y, max, numeric(1L), na.rm = TRUE) + 1
 
     # check x and z (x and z should contain an intercept column)
     if (missing(x)) x <- as.matrix(rep(1, N))
@@ -240,7 +249,7 @@ hltm <- function(y, x, z, beta_set = 1, sign_set = TRUE, control = list()) {
 
     # output
     out <- list(coefficients = coefs, scores = theta, vcov = covmat, log_Lik = log_Lik,
-        J = J, p = p, q = q, item_names = names(y), call = cl)
+                N = N, J = J, H = H, ylevels = yl, p = p, q = q, control = con, call = cl, inner = environment(theta_post_ltm))
     class(out) <- c("hltm", "hIRT")
     out
 }

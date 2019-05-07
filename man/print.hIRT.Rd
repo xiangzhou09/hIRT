@@ -9,7 +9,7 @@
 \arguments{
 \item{x}{An object of class \code{hIRT}}
 
-\item{digits}{the number of significant digits to use when printing}
+\item{digits}{The number of significant digits to use when printing}
 
 \item{...}{further arguments passed to or from other methods}
 }

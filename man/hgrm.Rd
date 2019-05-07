@@ -52,10 +52,13 @@ An object of class \code{hgrm}.
   their approximate standard errors.}
  \item{vcov}{Variance-covariance matrix of parameter estimates.}
  \item{log_Lik}{The log-likelihood value at convergence.}
+ \item{N}{Number of units.}
+ \item{J}{Number of items.}
  \item{H}{A vector denoting the number of response categories for each item.}
+ \item{ylevels}{A list showing the levels of the factorized response categories.}
  \item{p}{The number of predictors for the mean equation.}
  \item{q}{The number of predictors for the variance equation.}
- \item{item_names}{Names of items.}
+ \item{control}{List of control values.}
  \item{call}{The matched call.}
 }
 \description{

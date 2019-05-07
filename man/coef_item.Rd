@@ -2,15 +2,15 @@
 % Please edit documentation in R/coef.R
 \name{coef_item}
 \alias{coef_item}
-\alias{coef_item.hgrm}
-\alias{coef_item.hltm}
-\title{Extracting Estimates of Item Parameters from Hierarchical IRT Models.}
+\alias{coef_mean}
+\alias{coef_var}
+\title{Parameter Estimates from Hierarchical IRT Models.}
 \usage{
 coef_item(x, by_item = TRUE, digits = 3)
 
-\method{coef_item}{hgrm}(x, by_item = TRUE, digits = 3)
+coef_mean(x, digits = 3)
 
-\method{coef_item}{hltm}(x, by_item = TRUE, digits = 3)
+coef_var(x, digits = 3)
 }
 \arguments{
 \item{x}{An object of class \code{hIRT}}
@@ -18,15 +18,17 @@ coef_item(x, by_item = TRUE, digits = 3)
 \item{by_item}{Logical. Should item parameters be stored item by item
 (if \code{TRUE}) or put together in a data frame (if \code{FALSE})?}
 
-\item{digits}{the number of significant digits to use when printing}
+\item{digits}{The number of significant digits to use when printing}
 }
 \value{
-Item parameter estimates, standard errors, z values, and p values
+Parameter estimates, standard errors, z values, and p values
   organized as a data frame (if \code{by_item = TRUE}) or a list (if \code{
   by_item = FALSE}).
 }
 \description{
-Item parameter estimates from either \code{hltm} or \code{hgrm} models.
+Parameter estimates from either \code{hltm} or \code{hgrm} models. \code{code_item}
+reports estimates of item parameters. \code{coef_mean} reports results for the mean equation.
+\code{coef_var} reports results for the variance equation.
 }
 \examples{
 y <- nes_econ2008[, -(1:3)]
@@ -34,4 +36,6 @@ x <- model.matrix( ~ party * educ, nes_econ2008)
 z <- model.matrix( ~ party, nes_econ2008)
 nes_m1 <- hgrm(y, x, z)
 coef_item(nes_m1)
+coef_mean(nes_m1)
+coef_var(nes_m1)
 }

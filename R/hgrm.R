@@ -46,10 +46,13 @@
 #'   their approximate standard errors.}
 #'  \item{vcov}{Variance-covariance matrix of parameter estimates.}
 #'  \item{log_Lik}{The log-likelihood value at convergence.}
+#'  \item{N}{Number of units.}
+#'  \item{J}{Number of items.}
 #'  \item{H}{A vector denoting the number of response categories for each item.}
+#'  \item{ylevels}{A list showing the levels of the factorized response categories.}
 #'  \item{p}{The number of predictors for the mean equation.}
 #'  \item{q}{The number of predictors for the variance equation.}
-#'  \item{item_names}{Names of items.}
+#'  \item{control}{List of control values.}
 #'  \item{call}{The matched call.}
 #' @references Zhou, Xiang. 2018. "Hierarchical Item Response Models for Analyzing Public Opinion."
 #'   Working Paper.
@@ -78,13 +81,18 @@ hgrm <- function(y, x, z, beta_set = 1, sign_set = TRUE, control = list()) {
     y <- as.data.frame(y)
     N <- nrow(y)
     J <- ncol(y)
-    for (j in seq(1, J)) y[[j]] <- fac2int(y[[j]])
+    yl <- vector(mode = "list", length = J)
+    for (j in seq(1, J)) {
+      tmp <- factor(y[[j]], exclude = c(NA, NaN))
+      yl[[j]] <- levels(tmp)
+      y[[j]] <- as.integer(tmp)
+    }
     tmp <- match(TRUE, vapply(y, invalid_grm, logical(1L)))
     if (!is.na(tmp))
       stop(paste(names(y)[tmp], "does not have at least two valid responses"))
     # if(max(y, na.rm = TRUE)==2)
     #   stop("All items are dichotomous. Use 'hltm' ")
-    H <- vapply(y, max, numeric(1), na.rm = TRUE)
+    H <- vapply(y, max, numeric(1L), na.rm = TRUE)
 
     # check x and z (x and z should contain an intercept column)
     if (missing(x)) x <- as.matrix(rep(1, N))
@@ -153,6 +161,8 @@ hgrm <- function(y, x, z, beta_set = 1, sign_set = TRUE, control = list()) {
             df[["y"]], weights = df[["wt"]])[["coefficients"]])
         beta <- vapply(pseudo_lrm, function(x) x[length(x)], numeric(1L))
         alpha <- lapply(pseudo_lrm, function(x) c(Inf, x[-length(x)], -Inf))
+
+        # EAP and VAP estimates of latent preferences
         theta_eap <- t(theta_ls %*% w)
         theta_vap <- t(theta_ls^2 %*% w) - theta_eap^2
 
@@ -268,7 +278,7 @@ hgrm <- function(y, x, z, beta_set = 1, sign_set = TRUE, control = list()) {
 
     # output
     out <- list(coefficients = coefs, scores = theta, vcov = covmat, log_Lik = log_Lik,
-        H = H, p = p, q = q, item_names = names(y), call = cl)
+                N = N, J = J, H = H, ylevels = yl, p = p, q = q, control = con, call = cl)
     class(out) <- c("hgrm", "hIRT")
     out
 }

@@ -28,10 +28,10 @@ summary.hIRT <- function(object, by_item = FALSE, digits = 3, ...) {
   mean_coefs <- coef_mean(object, digits)
   var_coefs <- coef_var(object, digits)
   log_Lik = object[["log_Lik"]]
-  df = sum(object[["H"]]) + sum(object[["p"]]) + sum(object[["q"]]) - 2
-  N = length(object[["scores"]])
-  AIC = -2 * log_Lik + 2 * df
-  BIC = -2 * log_Lik + df * log(N)
+  df <- sum(object[["H"]]) + sum(object[["p"]]) + sum(object[["q"]]) - 2
+  N <- length(object[["scores"]])
+  AIC <- -2 * log_Lik + 2 * df
+  BIC <- -2 * log_Lik + df * log(N)
   model <- list(log_Lik = log_Lik, AIC = AIC, BIC = BIC)
   out <- list(call = object[["call"]], model = model, item_coefs = item_coefs,
               mean_coefs = mean_coefs, var_coefs = var_coefs)
