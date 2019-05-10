@@ -1,6 +1,6 @@
 #' Predicting from Hierarchical IRT Models
 #'
-#' \code{predict.hIRT} predicts latent preferences for new data (\eqn{y}, \eqn{x}, \eqn{z})
+#' \code{predict_hIRT} predicts latent preferences for new data (\eqn{y}, \eqn{x}, \eqn{z})
 #'   using a fitted \code{hIRT} object. Both posterior (given \eqn{y}, \eqn{x}, \eqn{z}) and
 #'   prior (given \eqn{x}, \eqn{z}) estimates are returned.
 #'
@@ -70,12 +70,12 @@ predict_hIRT <- function(object, y, x, z) {
   theta_ls <- con[["C"]] * GLpoints[[K]][["x"]]
   qw_ls <- con[["C"]] * GLpoints[[K]][["w"]]
 
-  # get parameters gamma, lambda
-  gamma <- coef_mean(object, digits = 7)[["Estimate"]]
-  lambda <- coef_var(object, digits = 7)[["Estimate"]]
-
-  # fitted mean and var
+  # fitted mean
+  gamma <- coef_mean(object, digits = 7)[["Estimate"]] %||% rep(0, object$p)
   fitted_mean <- as.vector(x %*% gamma)
+
+  # fitted var
+  lambda <- coef_var(object, digits = 7)[["Estimate"]] %||% rep(0, object$q)
   fitted_var <- exp(as.vector(z %*% lambda))
 
   if(inherits(object, "hgrm")){
