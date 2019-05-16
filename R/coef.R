@@ -57,7 +57,7 @@ coef_item <- function(x, by_item = TRUE, digits = 3) {
 coef_mean <- function(x, digits = 3) {
   if (!inherits(x, "hIRT"))
     stop("Use only with 'hIRT' objects.\n")
-  if (x[["p"]] < 2) return(NULL)
+  # if (x[["p"]] < 2) return(NULL)
   sH <- if (inherits(x, "hltm"))
     2 * x[["J"]] else sum(x[["H"]])
   gamma_indices <- (sH + 1):(sH + x[["p"]])
@@ -73,7 +73,7 @@ coef_mean <- function(x, digits = 3) {
 coef_var <- function(x, digits = 3) {
   if (!inherits(x, "hIRT"))
     stop("Use only with 'hIRT' objects.\n")
-  if (x[["q"]] < 2)return(NULL)
+  # if (x[["q"]] < 2) return(NULL)
   sH <- if (inherits(x, "hltm"))
     2 * x[["J"]] else sum(x[["H"]])
   lambda_indices <- (sH + x[["p"]] + 1):(sH + x[["p"]] + x[["q"]])

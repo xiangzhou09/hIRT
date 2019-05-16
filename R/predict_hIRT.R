@@ -71,11 +71,11 @@ predict_hIRT <- function(object, y, x, z) {
   qw_ls <- con[["C"]] * GLpoints[[K]][["w"]]
 
   # fitted mean
-  gamma <- coef_mean(object, digits = 7)[["Estimate"]] %||% rep(0, object$p)
+  gamma <- coef_mean(object, digits = 7)[["Estimate"]]
   fitted_mean <- as.vector(x %*% gamma)
 
   # fitted var
-  lambda <- coef_var(object, digits = 7)[["Estimate"]] %||% rep(0, object$q)
+  lambda <- coef_var(object, digits = 7)[["Estimate"]]
   fitted_var <- exp(as.vector(z %*% lambda))
 
   if(inherits(object, "hgrm")){
