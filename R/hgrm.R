@@ -217,8 +217,6 @@ hgrm <- function(y, x, z, alt_param = FALSE, beta_set = 1, sign_set = TRUE, cont
         # check convergence
         if (sqrt(sum((beta - beta_prev)^2)) < con[["eps"]]) {
             cat("\n converged at iteration", iter, "\n")
-            gamma <- setNames(gamma, paste("x", colnames(x), sep = "_"))
-            lambda <- setNames(lambda, paste("z", colnames(z), sep = "_"))
             break
         } else if (iter == con[["max_iter"]]) {
             stop("algorithm did not converge; try increasing max_iter.")
@@ -241,6 +239,9 @@ hgrm <- function(y, x, z, alt_param = FALSE, beta_set = 1, sign_set = TRUE, cont
       lambda[1L] <- lambda[1L] + 2 * log(tmp)
     }
 
+    gamma <- setNames(as.numeric(gamma), paste("x", colnames(x), sep = "_"))
+    lambda <- setNames(as.numeric(lambda), paste("z", colnames(z), sep = "_"))
+
     # inference
     pik <- matrix(unlist(Map(partial(dnorm, x = theta_ls), mean = fitted_mean,
                              sd = sqrt(fitted_var))), N, K, byrow = TRUE) * matrix(qw_ls, N, K, byrow = TRUE)
@@ -257,12 +258,11 @@ hgrm <- function(y, x, z, alt_param = FALSE, beta_set = 1, sign_set = TRUE, cont
     environment(sj_ab_grm) <- environment(si_gamma) <- environment(si_lambda) <- environment()
     s_ab <- unname(Reduce(rbind, lapply(1:J, sj_ab_grm)))
     s_lambda <- s_gamma <- NULL
-    if (p > 1)
-        s_gamma <- vapply(1:N, si_gamma, numeric(p))
-    if (q > 1)
-        s_lambda <- vapply(1:N, si_lambda, numeric(q))
 
     if(alt_param == FALSE){
+
+      s_gamma <- vapply(1:N, si_gamma, numeric(p))
+      s_lambda <- vapply(1:N, si_lambda, numeric(q))
 
       s_all <- rbind(s_ab[-c(1L, nrow(s_ab)), , drop = FALSE], s_gamma, s_lambda)
       s_all[is.na(s_all)] <- 0
@@ -272,10 +272,8 @@ hgrm <- function(y, x, z, alt_param = FALSE, beta_set = 1, sign_set = TRUE, cont
       # reorganize se_all
       sH <- sum(H)
       lambda_indices <- gamma_indices <- NULL
-      if (p > 1)
-        gamma_indices <- (sH - 1):(sH + p - 2)
-      if (q > 1)
-        lambda_indices <- (sH + p - 1):(sH + p + q - 2)
+      gamma_indices <- (sH - 1):(sH + p - 2)
+      lambda_indices <- (sH + p - 1):(sH + p + q - 2)
       se_all <- c(NA, se_all[1:(sH-2)], NA, se_all[gamma_indices], se_all[lambda_indices])
 
       # name se_all and covmat
@@ -287,6 +285,11 @@ hgrm <- function(y, x, z, alt_param = FALSE, beta_set = 1, sign_set = TRUE, cont
       rownames(covmat) <- colnames(covmat) <- c(names_ab[-c(1L, length(names_ab))], names(gamma),
                                                 names(lambda))
     } else {
+
+      if (p > 1)
+        s_gamma <- vapply(1:N, si_gamma, numeric(p))
+      if (q > 1)
+        s_lambda <- vapply(1:N, si_lambda, numeric(q))
 
       s_all <- rbind(s_ab, s_gamma[-1L, , drop = FALSE], s_lambda[-1L, , drop = FALSE])
       s_all[is.na(s_all)] <- 0
