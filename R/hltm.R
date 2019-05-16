@@ -43,7 +43,7 @@
 #' nes_m1 <- hltm(y_bin, x, z)
 #' print(nes_m1)
 
-hltm <- function(y, x, z, alt_param = FALSE, beta_set = 1, sign_set = TRUE, control = list()) {
+hltm <- function(y, x, z, beta_set = 1, sign_set = TRUE, control = list()) {
 
     # match call
     cl <- match.call()
@@ -190,20 +190,6 @@ hltm <- function(y, x, z, alt_param = FALSE, beta_set = 1, sign_set = TRUE, cont
         } else next
     }
 
-    if (alt_param == FALSE){
-
-      # location constraint (make the mean of alpha equal zero)
-      tmp <- - sum(alpha)/sum(beta)
-      alpha <- alpha + tmp * beta
-      gamma[1L] <- gamma[1L] - tmp
-
-      # scale constraint (make the product of beta equal one)
-      tmp <- exp(mean(log(abs(beta))))
-      gamma <- gamma * tmp
-      beta <- beta / tmp
-      lambda[1L] <- lambda[1L] + 2 * log(tmp)
-    }
-
     gamma <- setNames(as.numeric(gamma), paste("x", colnames(x), sep = "_"))
     lambda <- setNames(as.numeric(lambda), paste("z", colnames(z), sep = "_"))
 
@@ -225,55 +211,26 @@ hltm <- function(y, x, z, alt_param = FALSE, beta_set = 1, sign_set = TRUE, cont
     s_ab <- unname(Reduce(cbind, lapply(1:J, sj_ab_ltm)))
 
     s_lambda <- s_gamma <- NULL
+    s_gamma <- vapply(1:N, si_gamma, numeric(p))
+    s_lambda <- vapply(1:N, si_lambda, numeric(q))
 
-    if (alt_param == FALSE){
+    s_all <- rbind(t(s_ab)[-c(1L, ncol(s_ab)), , drop = FALSE], s_gamma, s_lambda)
+    s_all[is.na(s_all)] <- 0
+    covmat <- solve(tcrossprod(s_all))
+    se_all <- sqrt(diag(covmat))
 
-      s_gamma <- vapply(1:N, si_gamma, numeric(p))
-      s_lambda <- vapply(1:N, si_lambda, numeric(q))
+    # reorganize se_all
+    sH <- 2 * J
+    lambda_indices <- gamma_indices <- NULL
+    gamma_indices <- (sH - 1):(sH + p - 2)
+    lambda_indices <- (sH + p - 1):(sH + p + q - 2)
+    se_all <- c(NA, se_all[1:(sH-2)], NA, se_all[gamma_indices], se_all[lambda_indices])
 
-      s_all <- rbind(t(s_ab)[-c(1L, ncol(s_ab)), , drop = FALSE], s_gamma, s_lambda)
-      s_all[is.na(s_all)] <- 0
-      covmat <- solve(tcrossprod(s_all))
-      se_all <- sqrt(diag(covmat))
-
-      # reorganize se_all
-      sH <- 2 * J
-      lambda_indices <- gamma_indices <- NULL
-      gamma_indices <- (sH - 1):(sH + p - 2)
-      lambda_indices <- (sH + p - 1):(sH + p + q - 2)
-      se_all <- c(NA, se_all[1:(sH-2)], NA, se_all[gamma_indices], se_all[lambda_indices])
-
-      # name se_all and covmat
-      names_ab <- paste(rep(names(alpha), each = 2), c("Diff", "Dscrmn"))
-      names(se_all) <- c(names_ab, names(gamma), names(lambda))
-      rownames(covmat) <- colnames(covmat) <- c(names_ab[-c(1L, length(names_ab))], names(gamma),
-                                                names(lambda))
-    } else {
-
-      if (p > 1)
-        s_gamma <- vapply(1:N, si_gamma, numeric(p))
-      if (q > 1)
-        s_lambda <- vapply(1:N, si_lambda, numeric(q))
-
-      s_all <- rbind(t(s_ab), s_gamma[-1L, , drop = FALSE], s_lambda[-1L, , drop = FALSE])
-      s_all[is.na(s_all)] <- 0
-      covmat <- solve(tcrossprod(s_all))
-      se_all <- sqrt(diag(covmat))
-
-      # reorganize se_all
-      sH <- 2 * J
-      lambda_indices <- gamma_indices <- NULL
-      if (p > 1)
-        gamma_indices <- (sH + 1):(sH + p - 1)
-      if (q > 1)
-        lambda_indices <- (sH + p):(sH + p + q - 2)
-      se_all <- c(se_all[1:sH], NA, se_all[gamma_indices], NA, se_all[lambda_indices])
-
-      # name se_all and covmat
-      names_ab <- paste(rep(names(alpha), each = 2), c("Diff", "Dscrmn"))
-      names(se_all) <- c(names_ab, names(gamma), names(lambda))
-      rownames(covmat) <- colnames(covmat) <- c(names_ab, names(gamma)[-1L], names(lambda)[-1L])
-    }
+    # name se_all and covmat
+    names_ab <- paste(rep(names(alpha), each = 2), c("Diff", "Dscrmn"))
+    names(se_all) <- c(names_ab, names(gamma), names(lambda))
+    rownames(covmat) <- colnames(covmat) <- c(names_ab[-c(1L, length(names_ab))], names(gamma),
+                                              names(lambda))
 
     # item coefficients
     coefs_item <- Map(function(a, b) c(Diff = a, Dscrmn = b), alpha, beta)
