@@ -4,7 +4,8 @@
 \alias{hltm}
 \title{Fitting Hierarchical Latent Trait Models (for Binary Data).}
 \usage{
-hltm(y, x, z, beta_set = 1, sign_set = TRUE, control = list())
+hltm(y, x, z, alt_param = FALSE, beta_set = 1, sign_set = TRUE,
+  control = list())
 }
 \arguments{
 \item{y}{A data frame or matrix of item responses.}
@@ -14,6 +15,13 @@ mean of the latent preference. If missing, only the intercept term is included.}
 
 \item{z}{An optional model matrix, including the intercept term, that predicts the
 variance of the latent preference. If missing, only the intercept term is included.}
+
+\item{alt_param}{Logical. Whether to use the default parameterization (\code{TRUE}) or
+an alternative parameterization (\code{FALSE}). In the default parameterization,
+the arithmetic mean of the item difficulty parameters equals zero, and the geometric
+mean of the item discrimination parameters equals one. In the alternative parameterization,
+the arithmetic mean of the prior means of the latent preferences equals zero, and the
+geometric mean of the prior variances of the latent preferences equals one.}
 
 \item{beta_set}{The index of the item for which the discrimination parameter is
 restricted to be positive (or negative). It may take an integer value from
@@ -83,6 +91,5 @@ nes_m1 <- hltm(y_bin, x, z)
 print(nes_m1)
 }
 \references{
-Zhou, Xiang. 2017. "Hierarchical Item Response Models for Analyzing Public Opinion."
-  Working Paper.
+Zhou, Xiang. 2019. "\href{https://doi.org/10.1017/pan.2018.63}{Hierarchical Item Response Models for Analyzing Public Opinion.}" Political Analysis.
 }

@@ -12,6 +12,12 @@
 #'   mean of the latent preference. If missing, only the intercept term is included.
 #' @param z An optional model matrix, including the intercept term, that predicts the
 #'   variance of the latent preference. If missing, only the intercept term is included.
+#' @param alt_param Logical. Whether to use the default parameterization (\code{TRUE}) or
+#'   an alternative parameterization (\code{FALSE}). In the default parameterization,
+#'   the arithmetic mean of the item difficulty parameters equals zero, and the geometric
+#'   mean of the item discrimination parameters equals one. In the alternative parameterization,
+#'   the arithmetic mean of the prior means of the latent preferences equals zero, and the
+#'   geometric mean of the prior variances of the latent preferences equals one.
 #' @param beta_set The index of the item for which the discrimination parameter is
 #'   restricted to be positive (or negative). It may take an integer value from
 #'   1 to \code{ncol(y)}.
@@ -54,8 +60,7 @@
 #'  \item{q}{The number of predictors for the variance equation.}
 #'  \item{control}{List of control values.}
 #'  \item{call}{The matched call.}
-#' @references Zhou, Xiang. 2018. "Hierarchical Item Response Models for Analyzing Public Opinion."
-#'   Working Paper.
+#' @references Zhou, Xiang. 2019. "\href{https://doi.org/10.1017/pan.2018.63}{Hierarchical Item Response Models for Analyzing Public Opinion.}" Political Analysis.
 #' @importFrom rms lrm.fit
 #' @importFrom pryr compose
 #' @importFrom pryr partial
@@ -68,7 +73,7 @@
 #' nes_m1 <- hgrm(y, x, z)
 #' print(nes_m1)
 
-hgrm <- function(y, x, z, beta_set = 1, sign_set = TRUE, control = list()) {
+hgrm <- function(y, x, z, alt_param = FALSE, beta_set = 1, sign_set = TRUE, control = list()) {
 
     # match call
     cl <- match.call()
@@ -221,6 +226,21 @@ hgrm <- function(y, x, z, beta_set = 1, sign_set = TRUE, control = list()) {
         } else next
     }
 
+    if (alt_param == FALSE){
+
+      # location constraint (make the mean of alpha equal zero)
+      sum_alpha <- sum(vapply(alpha, function(x) sum(x[-c(1L, length(x))]), numeric(1L)))
+      tmp <- - sum_alpha/sum(beta * (H - 1))
+      alpha <- Map(function(x, y) x + tmp * y, alpha, beta)
+      gamma[1L] <- gamma[1L] - tmp
+
+      # scale constraint (make the product of beta equal one)
+      tmp <- exp(mean(log(abs(beta))))
+      gamma <- gamma * tmp
+      beta <- beta / tmp
+      lambda[1L] <- lambda[1L] + 2 * log(tmp)
+    }
+
     # inference
     pik <- matrix(unlist(Map(partial(dnorm, x = theta_ls), mean = fitted_mean,
                              sd = sqrt(fitted_var))), N, K, byrow = TRUE) * matrix(qw_ls, N, K, byrow = TRUE)
@@ -238,31 +258,58 @@ hgrm <- function(y, x, z, beta_set = 1, sign_set = TRUE, control = list()) {
     s_ab <- unname(Reduce(rbind, lapply(1:J, sj_ab_grm)))
     s_lambda <- s_gamma <- NULL
     if (p > 1)
-        s_gamma <- vapply(1:N, si_gamma, numeric(p - 1))
+        s_gamma <- vapply(1:N, si_gamma, numeric(p))
     if (q > 1)
-        s_lambda <- vapply(1:N, si_lambda, numeric(q - 1))
-    s_all <- rbind(s_ab, s_gamma, s_lambda)
-    s_all[is.na(s_all)] <- 0
-    covmat <- solve(tcrossprod(s_all))
-    se_all <- sqrt(diag(covmat))
+        s_lambda <- vapply(1:N, si_lambda, numeric(q))
 
-    # reorganize se_all
-    sH <- sum(H)
-    lambda_indices <- gamma_indices <- NULL
-    if (p > 1)
+    if(alt_param == FALSE){
+
+      s_all <- rbind(s_ab[-c(1L, nrow(s_ab)), , drop = FALSE], s_gamma, s_lambda)
+      s_all[is.na(s_all)] <- 0
+      covmat <- solve(tcrossprod(s_all))
+      se_all <- sqrt(diag(covmat))
+
+      # reorganize se_all
+      sH <- sum(H)
+      lambda_indices <- gamma_indices <- NULL
+      if (p > 1)
+        gamma_indices <- (sH - 1):(sH + p - 2)
+      if (q > 1)
+        lambda_indices <- (sH + p - 1):(sH + p + q - 2)
+      se_all <- c(NA, se_all[1:(sH-2)], NA, se_all[gamma_indices], se_all[lambda_indices])
+
+      # name se_all and covmat
+      names_ab <- unlist(lapply(names(alpha), function(x) {
+        tmp <- alpha[[x]]
+        paste(x, c(names(tmp)[-c(1L, length(tmp))], "Dscrmn"))
+      }))
+      names(se_all) <- c(names_ab, names(gamma), names(lambda))
+      rownames(covmat) <- colnames(covmat) <- c(names_ab[-c(1L, length(names_ab))], names(gamma),
+                                                names(lambda))
+    } else {
+
+      s_all <- rbind(s_ab, s_gamma[-1L, , drop = FALSE], s_lambda[-1L, , drop = FALSE])
+      s_all[is.na(s_all)] <- 0
+      covmat <- solve(tcrossprod(s_all))
+      se_all <- sqrt(diag(covmat))
+
+      # reorganize se_all
+      sH <- sum(H)
+      lambda_indices <- gamma_indices <- NULL
+      if (p > 1)
         gamma_indices <- (sH + 1):(sH + p - 1)
-    if (q > 1)
+      if (q > 1)
         lambda_indices <- (sH + p):(sH + p + q - 2)
-    se_all <- c(se_all[1:sH], NA, se_all[gamma_indices], NA, se_all[lambda_indices])
+      se_all <- c(se_all[1:sH], NA, se_all[gamma_indices], NA, se_all[lambda_indices])
 
-    # name se_all and covmat
-    names_ab <- unlist(lapply(names(alpha), function(x) {
+      # name se_all and covmat
+      names_ab <- unlist(lapply(names(alpha), function(x) {
         tmp <- alpha[[x]]
         paste(x, c(names(tmp)[-c(1, length(tmp))], "Dscrmn"))
-    }))
-    names(se_all) <- c(names_ab, names(gamma), names(lambda))
-    rownames(covmat) <- colnames(covmat) <- c(names_ab, names(gamma)[-1L],
-        names(lambda)[-1L])
+      }))
+      names(se_all) <- c(names_ab, names(gamma), names(lambda))
+      rownames(covmat) <- colnames(covmat) <- c(names_ab, names(gamma)[-1L], names(lambda)[-1L])
+    }
 
     # item coefficients
     coef_item <- Map(function(a, b) c(a[-c(1L, length(a))], Dscrmn = b), alpha, beta)
