@@ -4,9 +4,7 @@
 
 ## R CMD check results
 
-0 errors | 0 warnings | 1 note
-
-* Possibly mis-spelled words in DESCRIPTION: IRT (8:11) covariates (9:47) (These words are not mis-spelled)
+0 errors | 0 warnings | 0 notes
 
 ## Downstream dependencies
 

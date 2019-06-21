@@ -215,8 +215,10 @@ hltm <- function(y, x, z, beta_set = 1, sign_set = TRUE, control = list()) {
     s_lambda <- vapply(1:N, si_lambda, numeric(q))
 
     s_all <- rbind(t(s_ab)[-c(1L, ncol(s_ab)), , drop = FALSE], s_gamma, s_lambda)
+    # s_all <- t(s_ab)
     s_all[is.na(s_all)] <- 0
-    covmat <- solve(tcrossprod(s_all))
+    covmat <- tryCatch(solve(tcrossprod(s_all)),
+                       error = function(e) {print("se failed"); matrix(NA, nrow(s_all), nrow(s_all))})
     se_all <- sqrt(diag(covmat))
 
     # reorganize se_all
