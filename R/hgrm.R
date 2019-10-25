@@ -15,6 +15,11 @@
 #' @param beta_set The index of the item for which the discrimination parameter is
 #'   restricted to be positive (or negative). It may take an integer value from
 #'   1 to \code{ncol(y)}.
+#' @param constr The type of constraints used to identify the model, either "latent_scale"
+#'   or "items". The default, "latent_scale" constrains the mean of latent preferences
+#'   to zero and the geometric mean of prior variance to one. "items" places constraints
+#'   on item parameters instead and sets the mean of item difficulty parameters to zero
+#'   and the geometric mean of the discrimination parameters to one.
 #' @param sign_set Logical. Should the discrimination parameter of
 #'   the corresponding item (indexed by \code{beta_set}) be positive
 #'   (if \code{TRUE}) or negative (if \code{FALSE})?
@@ -67,7 +72,7 @@
 #' nes_m1 <- hgrm(y, x, z)
 #' print(nes_m1)
 
-hgrm <- function(y, x, z, beta_set = 1, sign_set = TRUE, control = list()) {
+hgrm <- function(y, x, z, constr = "latent_scale", beta_set = 1, sign_set = TRUE, control = list()) {
 
     # match call
     cl <- match.call()
@@ -107,6 +112,10 @@ hgrm <- function(y, x, z, beta_set = 1, sign_set = TRUE, control = list()) {
 
     # check beta_set and sign_set
     stopifnot(beta_set %in% 1:J, is.logical(sign_set))
+
+    # check constraint
+    if (!(constr %in% c("latent_scale","items")))
+      stop("'constr' should be either latent_scale or items")
 
     # control parameters
     con <- list(max_iter = 150, max_iter2 = 15, eps = 1e-04, eps2 = 0.001,
@@ -216,6 +225,23 @@ hgrm <- function(y, x, z, beta_set = 1, sign_set = TRUE, control = list()) {
             stop("algorithm did not converge; try increasing max_iter.")
             break
         } else next
+    }
+
+    # item constraints
+    if (constr == "items"){
+
+      # location constraint
+      alpha_sum <- sum(vapply(alpha, function(x) sum(x[-c(1L, length(x))]), numeric(1L)))
+      beta_sum <- sum((H-1) * beta)
+      c1 <- alpha_sum/beta_sum
+      gamma[1L] <- gamma[1L] + c1
+      alpha <- Map(function(x, y) x - c1 * y, alpha, beta)
+
+      # scale constraint
+      c2 <- 2 * mean(log(abs(beta)))
+      gamma <- gamma * exp(c2/2)
+      lambda[1L] <- lambda[1L] + c2
+      beta <- beta / exp(c2/2)
     }
 
     gamma <- setNames(as.numeric(gamma), paste("x", colnames(x), sep = "_"))

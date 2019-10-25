@@ -4,7 +4,8 @@
 \alias{hltm}
 \title{Fitting Hierarchical Latent Trait Models (for Binary Data).}
 \usage{
-hltm(y, x, z, beta_set = 1, sign_set = TRUE, control = list())
+hltm(y, x, z, constr = "latent_scale", beta_set = 1, sign_set = TRUE,
+  control = list())
 }
 \arguments{
 \item{y}{A data frame or matrix of item responses.}
@@ -14,6 +15,12 @@ mean of the latent preference. If missing, only the intercept term is included.}
 
 \item{z}{An optional model matrix, including the intercept term, that predicts the
 variance of the latent preference. If missing, only the intercept term is included.}
+
+\item{constr}{The type of constraints used to identify the model, either "latent_scale"
+or "items". The default, "latent_scale" constrains the mean of latent preferences
+to zero and the geometric mean of prior variance to one. "items" places constraints
+on item parameters instead and sets the mean of item difficulty parameters to zero
+and the geometric mean of the discrimination parameters to one.}
 
 \item{beta_set}{The index of the item for which the discrimination parameter is
 restricted to be positive (or negative). It may take an integer value from
