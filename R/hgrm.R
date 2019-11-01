@@ -167,6 +167,7 @@ hgrm <- function(y, x, z, constr = "latent_scale", beta_set = 1, sign_set = TRUE
         pseudo_y <- lapply(pseudo_tab, tab2df_grm, theta_ls = theta_ls)
         pseudo_lrm <- lapply(pseudo_y, function(df) lrm.fit(df[["x"]],
             df[["y"]], weights = df[["wt"]])[["coefficients"]])
+
         beta <- vapply(pseudo_lrm, function(x) x[length(x)], numeric(1L))
         alpha <- lapply(pseudo_lrm, function(x) c(Inf, x[-length(x)], -Inf))
 
@@ -227,23 +228,6 @@ hgrm <- function(y, x, z, constr = "latent_scale", beta_set = 1, sign_set = TRUE
         } else next
     }
 
-    # item constraints
-    if (constr == "items"){
-
-      # location constraint
-      alpha_sum <- sum(vapply(alpha, function(x) sum(x[-c(1L, length(x))]), numeric(1L)))
-      beta_sum <- sum((H-1) * beta)
-      c1 <- alpha_sum/beta_sum
-      gamma[1L] <- gamma[1L] + c1
-      alpha <- Map(function(x, y) x - c1 * y, alpha, beta)
-
-      # scale constraint
-      c2 <- 2 * mean(log(abs(beta)))
-      gamma <- gamma * exp(c2/2)
-      lambda[1L] <- lambda[1L] + c2
-      beta <- beta / exp(c2/2)
-    }
-
     gamma <- setNames(as.numeric(gamma), paste("x", colnames(x), sep = "_"))
     lambda <- setNames(as.numeric(lambda), paste("z", colnames(z), sep = "_"))
 
@@ -270,7 +254,7 @@ hgrm <- function(y, x, z, constr = "latent_scale", beta_set = 1, sign_set = TRUE
     s_all <- rbind(s_ab[-c(1L, nrow(s_ab)), , drop = FALSE], s_gamma, s_lambda)
     s_all[is.na(s_all)] <- 0
     covmat <- tryCatch(solve(tcrossprod(s_all)),
-                       error = function(e) {print("se failed"); matrix(NA, nrow(s_all), nrow(s_all))})
+                       error = function(e) {print("SE failed"); matrix(NA, nrow(s_all), nrow(s_all))})
     se_all <- sqrt(diag(covmat))
 
     # reorganize se_all
@@ -298,11 +282,79 @@ hgrm <- function(y, x, z, constr = "latent_scale", beta_set = 1, sign_set = TRUE
                         p_value = 2 * (1 - pnorm(abs(coef_all/se_all))))
     rownames(coefs) <- names(se_all)
 
+    # item constraints
+    if (constr == "items"){
+
+      gamma0_prev <- gamma[1L]
+
+      # location constraint
+      alpha_sum <- sum(vapply(alpha, function(x) sum(x[-c(1L, length(x))]), numeric(1L)))
+      beta_sum <- sum((H-1) * beta)
+      c1 <- alpha_sum/beta_sum
+      gamma[1L] <- gamma[1L] + c1
+      alpha <- Map(function(x, y) x - c1 * y, alpha, beta)
+
+      # scale constraint
+      c2 <- 2 * mean(log(abs(beta)))
+      gamma <- gamma * exp(c2/2)
+      lambda[1L] <- lambda[1L] + c2
+      beta <- beta / exp(c2/2)
+
+      # fitted means and variances
+      fitted_mean <- as.vector(x %*% gamma)
+      fitted_var <- exp(as.vector(z %*% lambda))
+
+      # theta_eap and theta_vap
+      theta_eap <- (theta_eap - gamma0_prev) * exp(c2/2) + gamma[1L]
+      theta_vap <- theta_vap * (exp(c2/2))^2
+
+      # covmat for new parameterization
+      tmp_fun <- function(d) {
+        mat <- diag(d)
+        mat[d, d] <- exp(-c2/2)
+        mat[1:(d-1), d] <- rep(-c1, d-1)
+        mat
+      }
+      A <- Reduce(Matrix::bdiag, lapply(H, tmp_fun))
+      A2 <- A[seq(2, nrow(A)-1), seq(2, ncol(A)-1)]
+      B <- Matrix::bdiag(exp(c2/2) * diag(p), diag(q))
+      C <- Matrix::bdiag(A2, B)
+      covmat <- C %*% Matrix::tcrossprod(covmat, C)
+
+      se_all <- sqrt(Matrix::diag(covmat))
+
+      # reorganize se_all
+      sH <- sum(H)
+      lambda_indices <- gamma_indices <- NULL
+      gamma_indices <- (sH - 1):(sH + p - 2)
+      lambda_indices <- (sH + p - 1):(sH + p + q - 2)
+      se_all <- c(NA, se_all[1:(sH-2)], NA, se_all[gamma_indices], se_all[lambda_indices])
+
+      # name se_all and covmat
+      names_ab <- unlist(lapply(names(alpha), function(x) {
+        tmp <- alpha[[x]]
+        paste(x, c(names(tmp)[-c(1L, length(tmp))], "Dscrmn"))
+      }))
+      names(se_all) <- c(names_ab, names(gamma), names(lambda))
+      rownames(covmat) <- colnames(covmat) <- c(names_ab[-c(1L, length(names_ab))],
+                                                names(gamma), names(lambda))
+
+      # item coefficients
+      coef_item <- Map(function(a, b) c(a[-c(1L, length(a))], Dscrmn = b), alpha, beta)
+
+      # all coefficients
+      coef_all <- c(unlist(coef_item), gamma, lambda)
+      coefs <- data.frame(Estimate = coef_all, Std_Error = se_all, z_value = coef_all/se_all,
+                          p_value = 2 * (1 - pnorm(abs(coef_all/se_all))))
+      rownames(coefs) <- names(se_all)
+    }
+
     # ability parameter estimates
-    theta <- data.frame(est = theta_eap, se = sqrt(theta_vap))
+    theta <- data.frame(post_mean = theta_eap, post_sd = sqrt(theta_vap),
+                        prior_mean = fitted_mean, prior_sd = sqrt(fitted_var))
 
     # output
-    out <- list(coefficients = coefs, scores = theta, vcov = covmat, log_Lik = log_Lik,
+    out <- list(coefficients = coefs, scores = theta, vcov = covmat, log_Lik = log_Lik, constr = constr,
                 N = N, J = J, H = H, ylevels = yl, p = p, q = q, control = con, call = cl)
     class(out) <- c("hgrm", "hIRT")
     out

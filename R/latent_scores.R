@@ -14,7 +14,7 @@
 #' pref <- latent_scores(nes_m1)
 #' require(ggplot2)
 #' ggplot(data = nes_econ2008) +
-#' geom_density(aes(x = pref$est, col = party))
+#' geom_density(aes(x = pref$post_mean, col = party))
 latent_scores <- function(x, digits = 3) {
     if (!inherits(x, "hIRT"))
       stop("Use only with 'hIRT' objects.\n")

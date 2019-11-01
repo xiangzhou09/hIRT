@@ -43,6 +43,10 @@ predict_hIRT <- function(object, y, x, z) {
   if (!inherits(object, "hIRT"))
     stop("Use only with 'hIRT' objects.\n")
 
+  # check constr
+  if (object$constr != "latent_scale")
+    stop("Use only with 'hIRT' objects with constr == 'latent_scale'\n")
+
   # check y
   if ((!is.data.frame(y) & !is.matrix(y)))
     stop("'y' must be either a data.frame or a matrix")

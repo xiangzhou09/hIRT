@@ -25,5 +25,5 @@ nes_m1 <- hgrm(y, x, z)
 pref <- latent_scores(nes_m1)
 require(ggplot2)
 ggplot(data = nes_econ2008) +
-geom_density(aes(x = pref$est, col = party))
+geom_density(aes(x = pref$post_mean, col = party))
 }
