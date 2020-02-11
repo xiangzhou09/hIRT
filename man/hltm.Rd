@@ -4,8 +4,15 @@
 \alias{hltm}
 \title{Fitting Hierarchical Latent Trait Models (for Binary Data).}
 \usage{
-hltm(y, x, z, constr = "latent_scale", beta_set = 1, sign_set = TRUE,
-  control = list())
+hltm(
+  y,
+  x,
+  z,
+  constr = "latent_scale",
+  beta_set = 1,
+  sign_set = TRUE,
+  control = list()
+)
 }
 \arguments{
 \item{y}{A data frame or matrix of item responses.}
