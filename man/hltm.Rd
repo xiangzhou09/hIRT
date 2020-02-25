@@ -2,14 +2,14 @@
 % Please edit documentation in R/hltm.R
 \name{hltm}
 \alias{hltm}
-\title{Fitting Hierarchical Latent Trait Models (for Binary Data).}
+\title{Fitting Hierarchical Latent Trait Models (for Binary Responses).}
 \usage{
 hltm(
   y,
-  x,
-  z,
-  constr = "latent_scale",
-  beta_set = 1,
+  x = NULL,
+  z = NULL,
+  constr = c("latent_scale", "items"),
+  beta_set = 1L,
   sign_set = TRUE,
   control = list()
 )
@@ -18,10 +18,10 @@ hltm(
 \item{y}{A data frame or matrix of item responses.}
 
 \item{x}{An optional model matrix, including the intercept term, that predicts the
-mean of the latent preference. If missing, only the intercept term is included.}
+mean of the latent preference. If not supplied, only the intercept term is included.}
 
 \item{z}{An optional model matrix, including the intercept term, that predicts the
-variance of the latent preference. If missing, only the intercept term is included.}
+variance of the latent preference. If not supplied, only the intercept term is included.}
 
 \item{constr}{The type of constraints used to identify the model, either "latent_scale"
 or "items". The default, "latent_scale" constrains the mean of latent preferences
@@ -30,7 +30,7 @@ on item parameters instead and sets the mean of item difficulty parameters to ze
 and the geometric mean of the discrimination parameters to one.}
 
 \item{beta_set}{The index of the item for which the discrimination parameter is
-restricted to be positive (or negative). It may take an integer value from
+restricted to be positive (or negative). It may take any integer value from
 1 to \code{ncol(y)}.}
 
 \item{sign_set}{Logical. Should the discrimination parameter of
@@ -40,7 +40,7 @@ the corresponding item (indexed by \code{beta_set}) be positive
 \item{control}{A list of control values
 \describe{
  \item{max_iter}{The maximum number of iterations of the EM algorithm.
-   Default 150.}
+   The default is 150.}
  \item{eps}{Tolerance parameter used to determine convergence of the
   EM algorithm. Specifically, iterations continue until the Euclidean
   distance between \eqn{\beta_{n}} and \eqn{\beta_{n-1}} falls under \code{eps},
@@ -48,13 +48,13 @@ the corresponding item (indexed by \code{beta_set}) be positive
   \code{eps}=1e-4 by default.}
  \item{max_iter2}{The maximum number of iterations of the conditional
    maximization procedures for updating \eqn{\gamma} and \eqn{\lambda}.
-   Default 15.}
+   The default is 15.}
  \item{eps2}{Tolerance parameter used to determine convergence of the
    conditional maximization procedures for updating \eqn{\gamma} and
    \eqn{\lambda}. Specifically, iterations continue until the Euclidean
   distance between two consecutive log likelihoods falls under \code{eps2}.
   \code{eps2}=1e-3 by default.}
- \item{K}{Number of Gauss-Legendre quadrature points for the E-step. Default 21.}
+ \item{K}{Number of Gauss-Legendre quadrature points for the E-step. The default is 21.}
  \item{C}{[-C, C] sets the range of integral in the E-step. \code{C}=5 by default.}
 }}
 }
@@ -88,13 +88,10 @@ y <- nes_econ2008[, -(1:3)]
 x <- model.matrix( ~ party * educ, nes_econ2008)
 z <- model.matrix( ~ party, nes_econ2008)
 
-# don't run
-# nes_m1 <- hgrm(y, x, z)
-
 dichotomize <- function(x) findInterval(x, c(mean(x, na.rm = TRUE)))
-y_bin <- as.data.frame(lapply(y, dichotomize))
-nes_m1 <- hltm(y_bin, x, z)
-print(nes_m1)
+y[] <- lapply(y, dichotomize)
+nes_m1 <- hltm(y, x, z)
+nes_m1
 }
 \references{
 Zhou, Xiang. 2019. "\href{https://doi.org/10.1017/pan.2018.63}{Hierarchical Item Response Models for Analyzing Public Opinion.}" Political Analysis.

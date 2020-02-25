@@ -1,6 +1,6 @@
-# hIRT 0.1.3
+# hIRT 0.2.2
 
-* removed default x and z values in hgrm() and hltm()
+* changed default x and z values in hgrm() and hltm()
 
 
 
