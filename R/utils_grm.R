@@ -11,10 +11,16 @@ loglik_grm <- function(alpha, beta, theta) {
     log(plogis(util + alpha_l) - plogis(util + alpha_h))
 }
 
-# posterior of theta (unnormalized) (returns N-vector) y: N*J data frame
-# x: N*p model matrix z: N*q model matrix alpha: length J list beta:
-# length J numeric vector gamma: p-vector lambda: q-vector theta_k:
-# numeric scalar qw_k numeric scalar
+# posterior of theta (unnormalized) (returns N-vector)
+# y: N*J data frame
+# x: N*p model matrix
+# z: N*q model matrix
+# alpha: length J list
+# beta: length J numeric vector
+# gamma: p-vector
+# lambda: q-vector
+# theta_k: numeric scalar
+# qw_k numeric scalar
 theta_post_grm <- function(theta_k, qw_k) {
     wt_k <- dnorm(theta_k - fitted_mean, sd = sqrt(fitted_var)) * qw_k  # prior density * quadrature weight
     loglik <- rowSums(loglik_grm(alpha, beta, rep(theta_k, N)), na.rm = TRUE)
@@ -29,16 +35,19 @@ theta_prior_grm <- function(theta_k, qw_k) {
   exp(logPop)
 }
 
-# pseudo tabulated data for item J (returns K*H_j matrix) y_j: N-vector
-# H_j: number of response categories for item j w: K*N matrix
+# pseudo tabulated data for item J (returns K*H_j matrix)
+# y_j: N-vector
+# H_j: number of response categories for item j
+# w: K*N matrix
 dummy_fun_grm <- function(y_j, H_j) {
     dummy_mat <- outer(y_j, 1:H_j, "==")  # N*H_j matrix
     dummy_mat[is.na(dummy_mat)] <- 0
     w %*% dummy_mat
 }
 
-# pseudo tabulated data to pseudo data frame tab: K*H_j matrix theta_ls:
-# K-vector
+# pseudo tabulated data to pseudo data frame
+# tab: K*H_j matrix
+# theta_ls: K-vector
 tab2df_grm <- function(tab, theta_ls) {
     H_j <- ncol(tab)
     theta <- rep(theta_ls, H_j)

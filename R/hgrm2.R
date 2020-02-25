@@ -1,6 +1,6 @@
-#' Fitting Hierarchical Graded Response Models (for Ordinal Responses)
+#' Hierarchical Graded Response Models with Known Item Parameters
 #'
-#' \code{hgrm} fits a hierarchical graded response model in which both
+#' \code{hgrm2} fits a hierarchical graded response model in which both
 #' the mean and the variance of the latent preference (ability parameter)
 #' may depend on person-specific covariates (\code{x} and \code{z}).
 #' Specifically, the mean is specified as a linear combination of \code{x}
@@ -12,17 +12,8 @@
 #'   mean of the latent preference. If not supplied, only the intercept term is included.
 #' @param z An optional model matrix, including the intercept term, that predicts the
 #'   variance of the latent preference. If not supplied, only the intercept term is included.
-#' @param constr The type of constraints used to identify the model, either "latent_scale"
-#'   or "items". The default, "latent_scale" constrains the mean of latent preferences
-#'   to zero and the geometric mean of prior variance to one. "items" places constraints
-#'   on item parameters instead and sets the mean of item difficulty parameters to zero
-#'   and the geometric mean of the discrimination parameters to one.
-#' @param beta_set The index of the item for which the discrimination parameter is
-#'   restricted to be positive (or negative). It may take any integer value from
-#'   1 to \code{ncol(y)}.
-#' @param sign_set Logical. Should the discrimination parameter of
-#'   the corresponding item (indexed by \code{beta_set}) be positive
-#'   (if \code{TRUE}) or negative (if \code{FALSE})?
+#' @param alpha Known item difficulty parameters
+#' @param beta Known item discrimination parameters
 #' @param control A list of control values
 #' \describe{
 #'  \item{max_iter}{The maximum number of iterations of the EM algorithm.
@@ -69,11 +60,10 @@
 #' y <- nes_econ2008[, -(1:3)]
 #' x <- model.matrix( ~ party * educ, nes_econ2008)
 #' z <- model.matrix( ~ party, nes_econ2008)
-#' nes_m1 <- hgrm(y, x, z)
-#' nes_m1
+#' nes_m2 <- hgrm2(y, x, z)
+#' nes_m2
 
-hgrm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
-                 beta_set = 1L, sign_set = TRUE, control = list()) {
+hgrm2 <- function(y, x = NULL, z = NULL, alpha = NULL, beta = NULL, control = list()) {
 
   # match call
   cl <- match.call()
@@ -107,12 +97,6 @@ hgrm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
   colnames(x) <- colnames(x) %||% paste0("x", 1:p)
   colnames(z) <- colnames(z) %||% paste0("x", 1:q)
 
-  # check beta_set and sign_set
-  stopifnot(beta_set %in% 1:J, is.logical(sign_set))
-
-  # check constraint
-  constr <- match.arg(constr, c("latent_scale","items"))
-
   # control parameters
   con <- list(max_iter = 150, max_iter2 = 15, eps = 1e-04, eps2 = 0.001, K = 21, C = 5)
   con[names(control)] <- control
@@ -132,8 +116,8 @@ hgrm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
     (tmp - mean(tmp, na.rm = TRUE))/sd(tmp, na.rm = TRUE)
   }
   theta_eap[is.na(theta_eap)] <- 0
-  alpha <- lapply(H, function(x) c(Inf, seq(1, -1, length.out = x - 1), -Inf))
-  beta <- vapply(y, function(y) cov(y, theta_eap, use = "complete.obs")/var(theta_eap), double(1L))
+  alpha <- alpha %||% lapply(H, function(x) c(Inf, seq(1, -1, length.out = x - 1), -Inf))
+  beta <- beta %||% vapply(y, function(y) cov(y, theta_eap, use = "complete.obs")/var(theta_eap), double(1L))
   gamma <- lm_opr %*% theta_eap
   lambda <- rep(0, q)
   fitted_mean <- as.double(x %*% gamma)
@@ -143,8 +127,8 @@ hgrm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
   for (iter in seq(1, con[["max_iter"]])) {
 
     # store previous parameters
-    alpha_prev <- alpha
-    beta_prev <- beta
+    # alpha_prev <- alpha
+    # beta_prev <- beta
     gamma_prev <- gamma
     lambda_prev <- lambda
 
@@ -155,12 +139,12 @@ hgrm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
       t(sweep(tmp, 1, rowSums(tmp), FUN = "/"))
     }
 
-    # maximization
-    pseudo_tab <- Map(dummy_fun_grm, y, H)
-    pseudo_y <- lapply(pseudo_tab, tab2df_grm, theta_ls = theta_ls)
-    pseudo_lrm <- lapply(pseudo_y, function(df) lrm.fit(df[["x"]], df[["y"]], weights = df[["wt"]])[["coefficients"]])
-    beta <- vapply(pseudo_lrm, function(x) x[[length(x)]], double(1L))
-    alpha <- lapply(pseudo_lrm, function(x) c(Inf, x[-length(x)], -Inf))
+    # # maximization
+    # pseudo_tab <- Map(dummy_fun_grm, y, H)
+    # pseudo_y <- lapply(pseudo_tab, tab2df_grm, theta_ls = theta_ls)
+    # pseudo_lrm <- lapply(pseudo_y, function(df) lrm.fit(df[["x"]], df[["y"]], weights = df[["wt"]])[["coefficients"]])
+    # beta <- vapply(pseudo_lrm, function(x) x[[length(x)]], double(1L))
+    # alpha <- lapply(pseudo_lrm, function(x) c(Inf, x[-length(x)], -Inf))
 
     # EAP and VAP estimates of latent preferences
     theta_eap <- t(theta_ls %*% w)
@@ -189,29 +173,11 @@ hgrm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
       lambda <- var_reg[["coefficients"]]
     }
 
-    # location constraint
-    tmp <- mean(x %*% gamma)
-    alpha <- Map(function(x, y) x + tmp * y, alpha, beta)
-    gamma[[1L]] <- gamma[[1L]] - tmp
-
-    # scale constraint
-    tmp <- mean(z %*% lambda)
-    gamma <- gamma/exp(tmp/2)
-    beta <- beta * exp(tmp/2)
-    lambda[[1L]] <- lambda[[1L]] - tmp
-
-    # direction contraint
-    if (sign_set == (beta[[beta_set]] < 0)) {
-      gamma <- -gamma
-      beta <- -beta
-    }
-
     fitted_mean <- as.double(x %*% gamma)
     fitted_var <- exp(as.double(z %*% lambda))
     cat(".")
 
-    # check convergence
-    if (sqrt(sum((beta - beta_prev)^2)) < con[["eps"]]) {
+    if (sqrt(sum((gamma - gamma_prev)^2)) < con[["eps"]]) {
       cat("\n converged at iteration", iter, "\n")
       break
     } else if (iter == con[["max_iter"]]) {
@@ -235,31 +201,29 @@ hgrm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
 
   # outer product of gradients
   environment(sj_ab_grm) <- environment(si_gamma) <- environment(si_lambda) <- environment()
-  s_ab <- unname(Reduce(rbind, lapply(1:J, sj_ab_grm)))
-  s_lambda <- s_gamma <- NULL
+  # s_ab <- unname(Reduce(rbind, lapply(1:J, sj_ab_grm)))
   s_gamma <- vapply(1:N, si_gamma, double(p))
   s_lambda <- vapply(1:N, si_lambda, double(q))
 
-  # covariance matrix and standard errors
-  s_all <- rbind(s_ab[-c(1L, nrow(s_ab)), , drop = FALSE], s_gamma, s_lambda)
+  # covariance matrix
+  s_all <- rbind(s_gamma, s_lambda)
   s_all[is.na(s_all)] <- 0
   covmat <- tryCatch(solve(tcrossprod(s_all)),
                      error = function(e) {message("SE calculation failed"); matrix(NA, nrow(s_all), nrow(s_all))})
-  se_all <- sqrt(diag(covmat))
 
   # reorganize se_all
   sH <- sum(H)
   gamma_indices <- (sH - 1):(sH + p - 2)
   lambda_indices <- (sH + p - 1):(sH + p + q - 2)
-  se_all <- c(NA, se_all[1:(sH-2)], NA, se_all[gamma_indices], se_all[lambda_indices])
+  se_all <- c(rep(0, sH), sqrt(diag(covmat)))
 
   # name se_all and covmat
   names_ab <- unlist(lapply(names(alpha), function(x) {
     tmp <- alpha[[x]]
-    paste(x, c(names(tmp)[-c(1L, length(tmp))], "Dscrmn"))
+    paste(x, c(paste0("y>=", seq(2, length(tmp)-1)), "Dscrmn"))
   }))
   names(se_all) <- c(names_ab, names(gamma), names(lambda))
-  rownames(covmat) <- colnames(covmat) <- c(names_ab[-c(1L, length(names_ab))], names(gamma), names(lambda))
+  rownames(covmat) <- colnames(covmat) <- c(names(gamma), names(lambda))
 
   # item coefficients
   coef_item <- Map(function(a, b) c(a[-c(1L, length(a))], Dscrmn = b), alpha, beta)
@@ -270,71 +234,6 @@ hgrm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
                       p_value = 2 * (1 - pnorm(abs(coef_all/se_all))))
   rownames(coefs) <- names(se_all)
 
-  # item constraints
-  if (constr == "items"){
-
-    gamma0_prev <- gamma[[1L]]
-
-    # location constraint
-    alpha_sum <- sum(vapply(alpha, function(x) sum(x[-c(1L, length(x))]), double(1L)))
-    beta_sum <- sum((H-1) * beta)
-    c1 <- alpha_sum/beta_sum
-    gamma[[1L]] <- gamma[[1L]] + c1
-    alpha <- Map(function(x, y) x - c1 * y, alpha, beta)
-
-    # scale constraint
-    c2 <- 2 * mean(log(abs(beta)))
-    gamma <- gamma * exp(c2/2)
-    lambda[[1L]] <- lambda[[1L]] + c2
-    beta <- beta / exp(c2/2)
-
-    # fitted means and variances
-    fitted_mean <- as.double(x %*% gamma)
-    fitted_var <- exp(as.double(z %*% lambda))
-
-    # theta_eap and theta_vap
-    theta_eap <- (theta_eap - gamma0_prev) * exp(c2/2) + gamma[[1L]]
-    theta_vap <- theta_vap * (exp(c2/2))^2
-
-    # covmat for new parameterization
-    tmp_fun <- function(d) {
-      mat <- diag(d)
-      mat[d, d] <- exp(-c2/2)
-      mat[1:(d-1), d] <- rep(-c1, d-1)
-      mat
-    }
-    A <- Reduce(Matrix::bdiag, lapply(H, tmp_fun))
-    A2 <- A[seq(2, nrow(A)-1), seq(2, ncol(A)-1)]
-    B <- Matrix::bdiag(exp(c2/2) * diag(p), diag(q))
-    C <- Matrix::bdiag(A2, B)
-    covmat <- C %*% Matrix::tcrossprod(covmat, C)
-
-    se_all <- sqrt(Matrix::diag(covmat))
-
-    # reorganize se_all
-    sH <- sum(H)
-    gamma_indices <- (sH - 1):(sH + p - 2)
-    lambda_indices <- (sH + p - 1):(sH + p + q - 2)
-    se_all <- c(NA, se_all[1:(sH-2)], NA, se_all[gamma_indices], se_all[lambda_indices])
-
-    # name se_all and covmat
-    names_ab <- unlist(lapply(names(alpha), function(x) {
-      tmp <- alpha[[x]]
-      paste(x, c(names(tmp)[-c(1L, length(tmp))], "Dscrmn"))
-    }))
-    names(se_all) <- c(names_ab, names(gamma), names(lambda))
-    rownames(covmat) <- colnames(covmat) <- c(names_ab[-c(1L, length(names_ab))], names(gamma), names(lambda))
-
-    # item coefficients
-    coef_item <- Map(function(a, b) c(a[-c(1L, length(a))], Dscrmn = b), alpha, beta)
-
-    # all coefficients
-    coef_all <- c(unlist(coef_item), gamma, lambda)
-    coefs <- data.frame(Estimate = coef_all, Std_Error = se_all, z_value = coef_all/se_all,
-                        p_value = 2 * (1 - pnorm(abs(coef_all/se_all))))
-    rownames(coefs) <- names(se_all)
-  }
-
   # ability parameter estimates
   theta <- data.frame(post_mean = theta_eap, post_sd = sqrt(theta_vap),
                       prior_mean = fitted_mean, prior_sd = sqrt(fitted_var))
@@ -342,7 +241,6 @@ hgrm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
   # output
   out <- list(coefficients = coefs, scores = theta, vcov = covmat, log_Lik = log_Lik, constr = constr,
               N = N, J = J, H = H, ylevels = ylevels, p = p, q = q, control = con, call = cl)
-  class(out) <- c("hgrm", "hIRT")
+  class(out) <- c("hgrm2", "hIRT")
   out
 }
-
