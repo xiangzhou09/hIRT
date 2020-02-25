@@ -7,8 +7,7 @@ invalid_grm <- function(x) max(x, na.rm = TRUE) < 2
 loglik_grm <- function(alpha, beta, theta) {
     util <- outer(theta, beta)
     alpha_l <- simplify2array(unname(Map(function(x, y) x[y], alpha, y)))
-    alpha_h <- simplify2array(unname(Map(function(x, y) x[y + 1L], alpha,
-        y)))
+    alpha_h <- simplify2array(unname(Map(function(x, y) x[y + 1L], alpha, y)))
     log(plogis(util + alpha_l) - plogis(util + alpha_h))
 }
 
@@ -44,29 +43,29 @@ tab2df_grm <- function(tab, theta_ls) {
     H_j <- ncol(tab)
     theta <- rep(theta_ls, H_j)
     y <- rep(1:H_j, each = K)
-    data.frame(y = factor(y), x = theta, wt = as.vector(tab))
+    data.frame(y = factor(y), x = theta, wt = as.double(tab))
 }
 
 # score function of alpha and beta (return a H_j*N matrix) Lik: N*K
 # matrix pik: N*K matrix alpha: J-list beta: J-vector theta_ls: K-vector
 sj_ab_grm <- function(j) {
-    temp2 <- array(0, c(N, K, H[j] + 1))
+    temp2 <- array(0, c(N, K, H[[j]] + 1))
     h <- .subset2(y, j)
-    drv_h <- vapply(theta_ls, function(theta_k) exp(alpha[[j]][h] + beta[j] *
-        theta_k)/(1 + exp(alpha[[j]][h] + beta[j] * theta_k))^2, numeric(N))
+    drv_h <- vapply(theta_ls, function(theta_k) exp(alpha[[j]][h] + beta[[j]] *
+        theta_k)/(1 + exp(alpha[[j]][h] + beta[[j]] * theta_k))^2, double(N))
     drv_h_plus_one <- -vapply(theta_ls, function(theta_k) exp(alpha[[j]][h +
-        1L] + beta[j] * theta_k)/(1 + exp(alpha[[j]][h + 1L] + beta[j] *
-        theta_k))^2, numeric(N))
+        1L] + beta[[j]] * theta_k)/(1 + exp(alpha[[j]][h + 1L] + beta[[j]] *
+        theta_k))^2, double(N))
     drv_h[h == 1, ] <- 0
-    drv_h_plus_one[h == H[j], ] <- 0
+    drv_h_plus_one[h == H[[j]], ] <- 0
     for (i in seq_len(N)) {
-        if (is.na(h[i])) next
-        temp2[i, , h[i]] <- drv_h[i, ]
-        temp2[i, , h[i] + 1L] <- drv_h_plus_one[i, ]
+        if (is.na(h[[i]])) next
+        temp2[i, , h[[i]]] <- drv_h[i, ]
+        temp2[i, , h[[i]] + 1L] <- drv_h_plus_one[i, ]
     }
-    comp_a <- pik * Lik/vapply(Lijk, `[`, 1:N, j, FUN.VALUE = numeric(N))  # N*K matrix
-    s_alpha <- vapply(1:N, function(i) comp_a[i, ] %*% temp2[i, , 2:H[j]],
-        numeric(H[j] - 1L))  # (H[j]-1)*N matrix
+    comp_a <- pik * Lik/vapply(Lijk, `[`, 1:N, j, FUN.VALUE = double(N))  # N*K matrix
+    s_alpha <- vapply(1:N, function(i) comp_a[i, ] %*% temp2[i, , 2:H[[j]]],
+        double(H[[j]] - 1L))  # (H[j]-1)*N matrix
     temp2_beta <- drv_h + drv_h_plus_one
     s_beta <- rowSums(comp_a * matrix(theta_ls, N, K, byrow = TRUE) * temp2_beta)  # N-vector
     s <- sweep(rbind(s_alpha, s_beta), 2, rowSums(Lik * pik), FUN = "/")

@@ -17,7 +17,7 @@
 
 \item{digits}{the number of significant digits to use when printing.}
 
-\item{...}{further arguments passed to or from other methods}
+\item{...}{further arguments passed to \code{\link{print}}.}
 
 \item{x}{An object of class \code{hIRT}}
 }

@@ -47,26 +47,27 @@ predict_hIRT <- function(object, y, x, z) {
   if (object$constr != "latent_scale")
     stop("Use only with 'hIRT' objects with constr == 'latent_scale'\n")
 
-  # check y
-  if ((!is.data.frame(y) & !is.matrix(y)))
-    stop("'y' must be either a data.frame or a matrix")
-  y <- as.data.frame(y)
+  # check y and convert y into data.frame if needed
+  if(missing(y)) stop("`y` must be provided.")
+  if ((!is.data.frame(y) && !is.matrix(y)) || ncol(y) == 1L)
+    stop("'y' must be either a data.frame or a matrix with at least two columns.")
+  if(is.matrix(y)) y <- as.data.frame(y)
+
   N <- nrow(y)
   J <- ncol(y)
   if (J != object$J)
     stop("'y' must have the same number of columns as 'object$J'")
 
   # check x and z (x and z should contain an intercept column)
-  if (missing(x)) x <- as.matrix(rep(1, N))
-  if (missing(z)) z <- as.matrix(rep(1, N))
-  if (is.null(nrow(x))) x <- as.matrix(x)
-  if (is.null(nrow(x))) z <- as.matrix(z)
-  if (nrow(x) != N || nrow(z) != N)
-    stop("both 'x' and 'z' must have the same number of rows as 'y'")
-  if (ncol(x) != object$p || ncol(z) != object$q)
-    stop("'x' and 'z' must have the same number of columns as 'object$p' and 'object$q', respectively")
-  x <- `colnames<-`(model.matrix(~ 0 + x), colnames(x) %||% paste("x", 1:object$p, sep = ""))
-  z <- `colnames<-`(model.matrix(~ 0 + z), colnames(z) %||% paste("z", 1:object$q, sep = ""))
+  x <- x %||% as.matrix(rep(1, N))
+  z <- z %||% as.matrix(rep(1, N))
+  if (!is.matrix(x)) stop("`x` must be a matrix.")
+  if (!is.matrix(z)) stop("`z` must be a matrix.")
+  if (nrow(x) != N || nrow(z) != N) stop("both 'x' and 'z' must have the same number of rows as 'y'")
+  p <- ncol(x)
+  q <- ncol(z)
+  colnames(x) <- colnames(x) %||% paste0("x", 1:p)
+  colnames(z) <- colnames(z) %||% paste0("x", 1:q)
 
   # obtain lists of theta_k and w_k parameters
   con <- object$control
@@ -76,23 +77,21 @@ predict_hIRT <- function(object, y, x, z) {
 
   # fitted mean
   gamma <- coef_mean(object, digits = 7)[["Estimate"]]
-  fitted_mean <- as.vector(x %*% gamma)
+  fitted_mean <- as.double(x %*% gamma)
 
   # fitted var
   lambda <- coef_var(object, digits = 7)[["Estimate"]]
-  fitted_var <- exp(as.vector(z %*% lambda))
+  fitted_var <- exp(as.double(z %*% lambda))
 
   if(inherits(object, "hgrm")){
 
     # preprocess y
-    for (j in seq(1, J)) {
-      y[[j]] <- as.integer(factor(y[[j]], levels = object$ylevels[[j]], exclude = c(NA, NaN)))
-    }
+    y[] <- Map(function(x, xl) as.integer(factor(x, levels = xl), na.exclude = c(NA, NaN)), y, object$ylevels)
 
     # get parameters alpha, beta
     tmp <- coef_item(object, digits = 7)
     alpha <- lapply(tmp, function(x) c(Inf, x[-nrow(x), "Estimate"], -Inf))
-    beta <- vapply(tmp, function(x) x[nrow(x), "Estimate"], numeric(1L))
+    beta <- vapply(tmp, function(x) x[nrow(x), "Estimate"], double(1L))
 
     # set environments
     environment(loglik_grm) <- environment(theta_post_grm) <- environment()
@@ -103,14 +102,12 @@ predict_hIRT <- function(object, y, x, z) {
   } else if (inherits(object, "hltm")){
 
     # preprocess y
-    for (j in seq(1, J)) {
-      y[[j]] <- as.integer(factor(y[[j]], levels = object$ylevels[[j]], exclude = c(NA, NaN))) - 1
-    }
+    y[] <- Map(function(x, xl) as.integer(factor(x, levels = xl) - 1, na.exclude = c(NA, NaN)), y, object$ylevels)
 
     # get parameters alpha, beta
     tmp <- coef_item(object, digits = 7)
-    alpha <- vapply(tmp, function(x) x[1L, "Estimate"], numeric(1L))
-    beta <- vapply(tmp, function(x) x[2L, "Estimate"], numeric(1L))
+    alpha <- vapply(tmp, function(x) x[1L, "Estimate"], double(1L))
+    beta <- vapply(tmp, function(x) x[2L, "Estimate"], double(1L))
 
     # set environments
     environment(loglik_ltm) <- environment(theta_post_ltm) <- environment()
