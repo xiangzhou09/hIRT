@@ -65,6 +65,8 @@
 #' @importFrom rms lrm.fit
 #' @importFrom pryr compose
 #' @importFrom pryr partial
+#' @importFrom ltm grm
+#' @importFrom ltm ltm
 #' @import stats
 #' @export
 #' @examples

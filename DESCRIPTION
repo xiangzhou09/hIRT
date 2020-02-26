@@ -17,6 +17,7 @@ Depends:
 Imports:
     pryr (>= 0.1.2),
     rms (>= 5.1-1),
+    ltm (>= 1.1-1),
     Matrix (>= 1.2-10)
 Suggests:
     ggplot2 (>= 2.2.1)

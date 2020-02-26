@@ -247,7 +247,7 @@ hgrm2 <- function(y, x = NULL, z = NULL, alpha = NULL, beta = NULL, control = li
                       prior_mean = fitted_mean, prior_sd = sqrt(fitted_var))
 
   # output
-  out <- list(coefficients = coefs, scores = theta, vcov = covmat, log_Lik = log_Lik, constr = constr,
+  out <- list(coefficients = coefs, scores = theta, vcov = covmat, log_Lik = log_Lik,
               N = N, J = J, H = H, ylevels = ylevels, p = p, q = q, control = con, call = cl)
   class(out) <- c("hgrm2", "hIRT")
   out
