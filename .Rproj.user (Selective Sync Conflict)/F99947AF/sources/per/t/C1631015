@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1582728357373.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "4046565979",
+    "id" : "C1631015",
+    "lastKnownWriteTime" : 1582750841,
+    "last_content_update" : 1582750841974,
+    "path" : "C:/Users/xiz225/Dropbox/R Packages/hIRT/R/utils_grm.R",
+    "project_path" : "R/utils_grm.R",
+    "properties" : {
+        "cursorPosition" : "3,0",
+        "scrollLine" : "0",
+        "source_window_id" : "w9ga1tuczd7oj"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 5,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

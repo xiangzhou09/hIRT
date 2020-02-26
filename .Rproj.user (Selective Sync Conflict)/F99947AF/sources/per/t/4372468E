@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1582727152804.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1766076595",
+    "id" : "4372468E",
+    "lastKnownWriteTime" : 1582754991,
+    "last_content_update" : 1582754991523,
+    "path" : "C:/Users/xiz225/Dropbox/R Packages/hIRT/R/hgrm.R",
+    "project_path" : "R/hgrm.R",
+    "properties" : {
+        "cursorPosition" : "68,22",
+        "scrollLine" : "58",
+        "source_window_id" : "w9ga1tuczd7oj"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
