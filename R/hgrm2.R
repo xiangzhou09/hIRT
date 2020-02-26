@@ -32,7 +32,7 @@
 #'   distance between two consecutive log likelihoods falls under \code{eps2}.
 #'   \code{eps2}=1e-3 by default.}
 #'  \item{K}{Number of Gauss-Legendre quadrature points for the E-step. The default is 21.}
-#'  \item{C}{[-C, C] sets the range of integral in the E-step. \code{C}=5 by default.}
+#'  \item{C}{[-C, C] sets the range of integral in the E-step. \code{C}=3 by default.}
 #' }
 #'
 #' @return An object of class \code{hgrm}.
@@ -98,7 +98,7 @@ hgrm2 <- function(y, x = NULL, z = NULL, alpha = NULL, beta = NULL, control = li
   colnames(z) <- colnames(z) %||% paste0("x", 1:q)
 
   # control parameters
-  con <- list(max_iter = 150, max_iter2 = 15, eps = 1e-04, eps2 = 0.001, K = 21, C = 5)
+  con <- list(max_iter = 150, max_iter2 = 15, eps = 1e-04, eps2 = 0.001, K = 21, C = 3)
   con[names(control)] <- control
 
   # set environments for utility functions
@@ -109,15 +109,22 @@ hgrm2 <- function(y, x = NULL, z = NULL, alpha = NULL, beta = NULL, control = li
   theta_ls <- con[["C"]] * GLpoints[[K]][["x"]]
   qw_ls <- con[["C"]] * GLpoints[[K]][["w"]]
 
-  # initialization
-  lm_opr <- tcrossprod(solve(crossprod(x)), x)
+  # imputation
+  y_imp <- y
+  if(anyNA(y)) y_imp[] <- lapply(y, impute)
+
+  # pca for initial values of theta_eap
   theta_eap <- {
-    tmp <- rowMeans(y, na.rm = TRUE)
+    tmp <- princomp(y_imp, cor = TRUE)$scores[, 1]
     (tmp - mean(tmp, na.rm = TRUE))/sd(tmp, na.rm = TRUE)
   }
-  theta_eap[is.na(theta_eap)] <- 0
+
+  # set alpha and beta
   alpha <- alpha %||% lapply(H, function(x) c(Inf, seq(1, -1, length.out = x - 1), -Inf))
   beta <- beta %||% vapply(y, function(y) cov(y, theta_eap, use = "complete.obs")/var(theta_eap), double(1L))
+
+  # initial values of gamma and lambda
+  lm_opr <- tcrossprod(solve(crossprod(x)), x)
   gamma <- lm_opr %*% theta_eap
   lambda <- rep(0, q)
   fitted_mean <- as.double(x %*% gamma)
@@ -177,7 +184,7 @@ hgrm2 <- function(y, x = NULL, z = NULL, alpha = NULL, beta = NULL, control = li
     fitted_var <- exp(as.double(z %*% lambda))
     cat(".")
 
-    if (sqrt(sum((gamma - gamma_prev)^2)) < con[["eps"]]) {
+    if (sqrt(mean((gamma - gamma_prev)^2)) < con[["eps"]]) {
       cat("\n converged at iteration", iter, "\n")
       break
     } else if (iter == con[["max_iter"]]) {
@@ -209,7 +216,8 @@ hgrm2 <- function(y, x = NULL, z = NULL, alpha = NULL, beta = NULL, control = li
   s_all <- rbind(s_gamma, s_lambda)
   s_all[is.na(s_all)] <- 0
   covmat <- tryCatch(solve(tcrossprod(s_all)),
-                     error = function(e) {message("SE calculation failed"); matrix(NA, nrow(s_all), nrow(s_all))})
+                     error = function(e) {warning("The information matrix is singular; SE calculation failed.");
+                       matrix(NA, nrow(s_all), nrow(s_all))})
 
   # reorganize se_all
   sH <- sum(H)
