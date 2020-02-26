@@ -1,6 +1,10 @@
 # check if a vector is dichotomous
 invalid_ltm <- function(x) max(x, na.rm = TRUE) != 1
 
+glm_fit <- function(x, y, weights, tol = 1e-16, ...){
+    glm.fit(x[weights>tol, , drop = FALSE], y[weights>tol], weights = weights[weights>tol], ...)
+}
+
 # log likelihood function (return N * J matrix) y: N*J data frame alpha:
 # length J numeric vector beta: length J numeric vector theta: length N
 # numeric vector

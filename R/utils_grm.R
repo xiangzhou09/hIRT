@@ -1,6 +1,10 @@
 # check if a vector has at least two valid responses
 invalid_grm <- function(x) max(x, na.rm = TRUE) < 2
 
+lrm_fit <- function(x, y, weights, tol = 1e-16, ...){
+  lrm.fit(x[weights>tol], y[weights>tol], weights = weights[weights>tol], ...)
+}
+
 # log likelihood function (return N * J matrix) y: N*J data frame alpha:
 # length J list beta: length J numeric vector theta: length N numeric
 # vector
@@ -73,6 +77,7 @@ sj_ab_grm <- function(j) {
         temp2[i, , h[[i]] + 1L] <- drv_h_plus_one[i, ]
     }
     comp_a <- pik * Lik/vapply(Lijk, `[`, 1:N, j, FUN.VALUE = double(N))  # N*K matrix
+    comp_a[is.na(comp_a)] <- 0
     s_alpha <- vapply(1:N, function(i) comp_a[i, ] %*% temp2[i, , 2:H[[j]]],
         double(H[[j]] - 1L))  # (H[j]-1)*N matrix
     temp2_beta <- drv_h + drv_h_plus_one

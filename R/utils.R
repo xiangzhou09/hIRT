@@ -2,6 +2,12 @@ utils::globalVariables(c("H", "J", "K", "Li", "Lijk", "Lik", "N",
                   "alpha", "dalpha", "lambda", "p", "q", "pik",
                   "theta_ls", "w", "x", "y", "z", "fitted_mean", "fitted_var"))
 
+# median impute
+impute <- function(vec){
+  vec[is.na(vec)] <- median(vec, na.rm = TRUE)
+  vec
+}
+
 # logical or infix function
 `%||%` <- function(a, b) if (!is.null(a)) a else b
 

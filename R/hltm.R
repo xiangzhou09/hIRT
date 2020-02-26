@@ -41,7 +41,8 @@
 #' nes_m1
 
 hltm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
-                 beta_set = 1L, sign_set = TRUE, control = list()) {
+                 beta_set = 1L, sign_set = TRUE, init = c("naive", "glm", "irt"),
+                 control = list()) {
 
   # match call
   cl <- match.call()
@@ -79,10 +80,11 @@ hltm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
   stopifnot(beta_set %in% 1:J, is.logical(sign_set))
 
   # check constraint
-  constr <- match.arg(constr, c("latent_scale","items"))
+  constr <- match.arg(constr)
+  init <- match.arg(init)
 
   # control parameters
-  con <- list(max_iter = 150, max_iter2 = 15, eps = 1e-04, eps2 = 0.001, K = 21, C = 5)
+  con <- list(max_iter = 450, max_iter2 = 15, eps = 1e-04, eps2 = 1e-03, K = 21, C = 3)
   con[names(control)] <- control
 
   # set environments for utility functions
@@ -93,15 +95,32 @@ hltm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
   theta_ls <- con[["C"]] * GLpoints[[K]][["x"]]
   qw_ls <- con[["C"]] * GLpoints[[K]][["w"]]
 
+  # imputation
+  y_imp <- y
+  if(anyNA(y)) y_imp[] <- lapply(y, impute)
+
+  # pca
+  theta_eap <- {
+    tmp <- princomp(y_imp, cor = TRUE)$scores[, 1]
+    (tmp - mean(tmp, na.rm = TRUE))/sd(tmp, na.rm = TRUE)
+  }
+
+  # initialization of alpha and beta parameters
+  if (init == "naive"){
+    alpha <- rep(0, J)
+    beta <- vapply(y, function(y) cov(y, theta_eap, use = "complete.obs")/var(theta_eap), double(1L))
+  } else if (init == "glm"){
+    pseudo_logit <- lapply(y_imp, function(y) glm.fit(cbind(1, theta_eap), y, family = binomial("logit"))[["coefficients"]])
+    beta <- vapply(pseudo_logit, function(x) x[2L], double(1L))
+    alpha <- vapply(pseudo_logit, function(x) x[1L], double(1L))
+  } else {
+    ltm_coefs <- ltm(y ~ z1)[["coefficients"]]
+    beta <- ltm_coefs[, 2, drop = TRUE]
+    alpha <- ltm_coefs[, 1, drop = TRUE]
+  }
+
   # initialization
   lm_opr <- tcrossprod(solve(crossprod(x)), x)
-  theta_eap <- {
-      tmp <- rowMeans(y, na.rm = TRUE)
-      (tmp - mean(tmp, na.rm = TRUE))/sd(tmp, na.rm = TRUE)
-  }
-  theta_eap[is.na(theta_eap)] <- 0
-  alpha <- rep(0, J)
-  beta <- vapply(y, function(y) cov(y, theta_eap, use = "complete.obs")/var(theta_eap), double(1L))
   gamma <- lm_opr %*% theta_eap
   lambda <- rep(0, q)
   fitted_mean <- as.double(x %*% gamma)
@@ -115,6 +134,7 @@ hltm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
       beta_prev <- beta
       gamma_prev <- gamma
       lambda_prev <- lambda
+      theta_eap_prev <- theta_eap
 
       # construct w_ik
       posterior <- Map(theta_post_ltm, theta_ls, qw_ls)
@@ -170,15 +190,19 @@ hltm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
 
       # direction contraint
       if (sign_set == (beta[beta_set] < 0)) {
-          gamma <- -gamma
-          beta <- -beta
+        gamma <- -gamma
+        beta <- -beta
       }
       fitted_mean <- as.double(x %*% gamma)
       fitted_var <- exp(as.double(z %*% lambda))
+
+      # cat(beta, "\n")
+      # cat(abs(beta - beta_prev), "\n")
+
       cat(".")
 
       # check convergence
-      if (sqrt(sum((beta - beta_prev)^2)) < con[["eps"]]) {
+      if (sqrt(mean((beta - beta_prev)^2)) < con[["eps"]]) {
           cat("\n converged at iteration", iter, "\n")
           break
       } else if (iter == con[["max_iter"]]) {
@@ -212,7 +236,8 @@ hltm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
   s_all <- rbind(t(s_ab)[-c(1L, ncol(s_ab)), , drop = FALSE], s_gamma, s_lambda)
   s_all[is.na(s_all)] <- 0
   covmat <- tryCatch(solve(tcrossprod(s_all)),
-                     error = function(e) {message("SE calculation failed"); matrix(NA, nrow(s_all), nrow(s_all))})
+                     error = function(e) {warning("The information matrix is singular; SE calculation failed.");
+                       matrix(NA, nrow(s_all), nrow(s_all))})
   se_all <- sqrt(diag(covmat))
 
   # reorganize se_all

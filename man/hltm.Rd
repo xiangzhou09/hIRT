@@ -11,6 +11,7 @@ hltm(
   constr = c("latent_scale", "items"),
   beta_set = 1L,
   sign_set = TRUE,
+  init = c("naive", "glm", "irt"),
   control = list()
 )
 }
@@ -37,6 +38,9 @@ restricted to be positive (or negative). It may take any integer value from
 the corresponding item (indexed by \code{beta_set}) be positive
 (if \code{TRUE}) or negative (if \code{FALSE})?}
 
+\item{init}{A character string indicating how item parameters are initialized. It can be
+"naive", "glm", or "irt".}
+
 \item{control}{A list of control values
 \describe{
  \item{max_iter}{The maximum number of iterations of the EM algorithm.
@@ -55,7 +59,7 @@ the corresponding item (indexed by \code{beta_set}) be positive
   distance between two consecutive log likelihoods falls under \code{eps2}.
   \code{eps2}=1e-3 by default.}
  \item{K}{Number of Gauss-Legendre quadrature points for the E-step. The default is 21.}
- \item{C}{[-C, C] sets the range of integral in the E-step. \code{C}=5 by default.}
+ \item{C}{[-C, C] sets the range of integral in the E-step. \code{C}=3 by default.}
 }}
 }
 \value{
