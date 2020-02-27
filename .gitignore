@@ -1,8 +1,8 @@
-^.*\.Rproj$
-^\.Rproj\.user$
+.Rproj.user
 .Rhistory
 .RData
 .Ruserdata
+hIRT.Rproj
 data-raw
 CRAN-RELEASE
 cran-comments
