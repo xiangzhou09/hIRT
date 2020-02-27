@@ -99,7 +99,7 @@ hltm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
   y_imp <- y
   if(anyNA(y)) y_imp[] <- lapply(y, impute)
 
-  # pca
+  # pca for initial values of theta_eap
   theta_eap <- {
     tmp <- princomp(y_imp, cor = TRUE)$scores[, 1]
     (tmp - mean(tmp, na.rm = TRUE))/sd(tmp, na.rm = TRUE)
@@ -119,7 +119,7 @@ hltm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
     alpha <- ltm_coefs[, 1, drop = TRUE]
   }
 
-  # initialization
+  # initial values of gamma and lambda
   lm_opr <- tcrossprod(solve(crossprod(x)), x)
   gamma <- lm_opr %*% theta_eap
   lambda <- rep(0, q)
@@ -134,7 +134,6 @@ hltm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
       beta_prev <- beta
       gamma_prev <- gamma
       lambda_prev <- lambda
-      theta_eap_prev <- theta_eap
 
       # construct w_ik
       posterior <- Map(theta_post_ltm, theta_ls, qw_ls)
@@ -150,6 +149,8 @@ hltm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
           df[["y"]], weights = df[["wt"]], family = quasibinomial("logit"))[["coefficients"]])
       beta <- vapply(pseudo_logit, function(x) x[2L], double(1L))
       alpha <- vapply(pseudo_logit, function(x) x[1L], double(1L))
+
+      # EAP and VAP estimates of latent preferences
       theta_eap <- t(theta_ls %*% w)
       theta_vap <- t(theta_ls^2 %*% w) - theta_eap^2
 
@@ -196,9 +197,6 @@ hltm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
       fitted_mean <- as.double(x %*% gamma)
       fitted_var <- exp(as.double(z %*% lambda))
 
-      # cat(beta, "\n")
-      # cat(abs(beta - beta_prev), "\n")
-
       cat(".")
 
       # check convergence
@@ -224,12 +222,10 @@ hltm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
   # log likelihood
   log_Lik <- sum(log(Li))
 
+  # outer product of gradients
   environment(dalpha_ltm) <- environment(sj_ab_ltm) <- environment(si_gamma) <- environment(si_lambda) <- environment()
-
   dalpha <- dalpha_ltm(alpha, beta)  # K*J matrix
   s_ab <- unname(Reduce(cbind, lapply(1:J, sj_ab_ltm)))
-
-  s_lambda <- s_gamma <- NULL
   s_gamma <- vapply(1:N, si_gamma, double(p))
   s_lambda <- vapply(1:N, si_lambda, double(q))
 
@@ -242,7 +238,6 @@ hltm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
 
   # reorganize se_all
   sH <- 2 * J
-  lambda_indices <- gamma_indices <- NULL
   gamma_indices <- (sH - 1):(sH + p - 2)
   lambda_indices <- (sH + p - 1):(sH + p + q - 2)
   se_all <- c(NA, se_all[1:(sH-2)], NA, se_all[gamma_indices], se_all[lambda_indices])

@@ -1,39 +1,14 @@
-#' Hierarchical Graded Response Models with Known Item Parameters
+#' Hierarchical Latent Trait Models with Known Item Parameters.
 #'
-#' \code{hgrm2} fits a hierarchical graded response model where the item parameters
+#' \code{hltm2} fits a hierarchical latent trait model where the item parameters
 #'   are known and supplied by the user.
 #'
-#' @param y A data frame or matrix of item responses.
-#' @param x An optional model matrix, including the intercept term, that predicts the
-#'   mean of the latent preference. If not supplied, only the intercept term is included.
-#' @param z An optional model matrix, including the intercept term, that predicts the
-#'   variance of the latent preference. If not supplied, only the intercept term is included.
+#' @inheritParams hgrm2
 #' @param item_coefs A list of known item parameters. The parameters of item \eqn{j} are given
-#'   by the \eqn{j}th element, which should be a vector of length \eqn{H_j}, containing
-#'   \eqn{H_j - 1} item difficulty parameters (in descending order) and one item discrimination
-#'   parameter.
-#' @param control A list of control values
-#' \describe{
-#'  \item{max_iter}{The maximum number of iterations of the EM algorithm.
-#'    The default is 150.}
-#'  \item{eps}{Tolerance parameter used to determine convergence of the
-#'   EM algorithm. Specifically, iterations continue until the Euclidean
-#'   distance between \eqn{\beta_{n}} and \eqn{\beta_{n-1}} falls under \code{eps},
-#'   where \eqn{\beta} is the vector of item discrimination parameters.
-#'   \code{eps}=1e-4 by default.}
-#'  \item{max_iter2}{The maximum number of iterations of the conditional
-#'    maximization procedures for updating \eqn{\gamma} and \eqn{\lambda}.
-#'    The default is 15.}
-#'  \item{eps2}{Tolerance parameter used to determine convergence of the
-#'    conditional maximization procedures for updating \eqn{\gamma} and
-#'    \eqn{\lambda}. Specifically, iterations continue until the Euclidean
-#'   distance between two consecutive log likelihoods falls under \code{eps2}.
-#'   \code{eps2}=1e-3 by default.}
-#'  \item{K}{Number of Gauss-Legendre quadrature points for the E-step. The default is 21.}
-#'  \item{C}{[-C, C] sets the range of integral in the E-step. \code{C}=3 by default.}
-#' }
+#'   by the \eqn{j}th element, which should be a vector of length 2, containing
+#'   the item difficulty parameter and item discrimination parameter.
 #'
-#' @return An object of class \code{hgrm}.
+#' @return An object of class \code{hltm}.
 #'  \item{coefficients}{A data frame of parameter estimates, standard errors,
 #'   z values and p values.}
 #'  \item{scores}{A data frame of EAP estimates of latent preferences and
@@ -54,30 +29,32 @@
 #' @import stats
 #' @export
 #' @examples
-#'
 #' y <- nes_econ2008[, -(1:3)]
 #' x <- model.matrix( ~ party * educ, nes_econ2008)
 #' z <- model.matrix( ~ party, nes_econ2008)
+#' dichotomize <- function(x) findInterval(x, c(mean(x, na.rm = TRUE)))
+#' y_bin <- y
+#' y_bin[] <- lapply(y, dichotomize)
 #'
 #' n <- nrow(nes_econ2008)
 #' id_train <- sample.int(n, n/4)
 #' id_test <- setdiff(1:n, id_train)
 #'
-#' y_train <- y[id_train, ]
+#' y_bin_train <- y_bin[id_train, ]
 #' x_train <- x[id_train, ]
 #' z_train <- z[id_train, ]
 #'
-#' mod_train <- hgrm(y_train, x_train, z_train)
+#' mod_train <- hltm(y_bin_train, x_train, z_train)
 #'
-#' y_test <- y[id_test, ]
+#' y_bin_test <- y_bin[id_test, ]
 #' x_test <- x[id_test, ]
 #' z_test <- z[id_test, ]
 #'
 #' item_coefs <- lapply(coef_item(mod_train), `[[`, "Estimate")
 #'
-#' model_test <- hgrm2(y_test, x_test, z_test, item_coefs = item_coefs)
+#' model_test <- hltm2(y_bin_test, x_test, z_test, item_coefs = item_coefs)
 
-hgrm2 <- function(y, x = NULL, z = NULL, item_coefs, control = list()) {
+hltm2 <- function(y, x = NULL, z = NULL, item_coefs, control = list()) {
 
   # match call
   cl <- match.call()
@@ -95,10 +72,10 @@ hgrm2 <- function(y, x = NULL, z = NULL, item_coefs, control = list()) {
   # convert each y_j into an integer vector
   y[] <- lapply(y, factor, exclude = c(NA, NaN))
   ylevels <- lapply(y, levels)
-  y[] <- lapply(y, as.integer)
-  if (!is.na(invalid <- match(TRUE, vapply(y, invalid_grm, logical(1L)))))
-    stop(paste(names(y)[invalid], "does not have at least two valid responses"))
-  H <- vapply(y, max, integer(1L), na.rm = TRUE)
+  y[] <- lapply(y, function(x) as.integer(x) - 1)
+  if (!is.na(invalid <- match(TRUE, vapply(y, invalid_ltm, logical(1L)))))
+    stop(paste(names(y)[invalid], "is not a dichotomous variable"))
+  H <- vapply(y, max, double(1L), na.rm = TRUE) + 1
 
   # extract item parameters
   if(missing(item_coefs))
@@ -108,8 +85,8 @@ hgrm2 <- function(y, x = NULL, z = NULL, item_coefs, control = list()) {
   item_coefs_H <- vapply(item_coefs, length, integer(1L))
   if(!all.equal(item_coefs_H, H))
     stop("`item_coefs` do not match the number of response categories in `y`")
-  alpha <- lapply(item_coefs, function(x) c(Inf, x[-length(x)], -Inf))
-  beta <- vapply(item_coefs, function(x) x[[length(x)]], double(1L))
+  alpha <- vapply(item_coefs, function(x) x[[1L]], double(1L))
+  beta <- vapply(item_coefs, function(x) x[[2L]], double(1L))
 
   # check x and z (x and z should contain an intercept column)
   x <- x %||% as.matrix(rep(1, N))
@@ -123,11 +100,11 @@ hgrm2 <- function(y, x = NULL, z = NULL, item_coefs, control = list()) {
   colnames(z) <- colnames(z) %||% paste0("x", 1:q)
 
   # control parameters
-  con <- list(max_iter = 150, max_iter2 = 15, eps = 1e-04, eps2 = 0.001, K = 21, C = 3)
+  con <- list(max_iter = 150, max_iter2 = 15, eps = 1e-04, eps2 = 1e-03, K = 21, C = 3)
   con[names(control)] <- control
 
   # set environments for utility functions
-  environment(loglik_grm) <- environment(theta_post_grm) <- environment(dummy_fun_grm) <- environment(tab2df_grm) <- environment()
+  environment(loglik_ltm) <- environment(theta_post_ltm) <- environment(dummy_fun_ltm) <- environment(tab2df_ltm) <- environment()
 
   # GL points
   K <- con[["K"]]
@@ -161,18 +138,19 @@ hgrm2 <- function(y, x = NULL, z = NULL, item_coefs, control = list()) {
     lambda_prev <- lambda
 
     # construct w_ik
-    posterior <- Map(theta_post_grm, theta_ls, qw_ls)
+    posterior <- Map(theta_post_ltm, theta_ls, qw_ls)
     w <- {
       tmp <- matrix(unlist(posterior), N, K)
       t(sweep(tmp, 1, rowSums(tmp), FUN = "/"))
     }
 
     # # maximization
-    # pseudo_tab <- Map(dummy_fun_grm, y, H)
-    # pseudo_y <- lapply(pseudo_tab, tab2df_grm, theta_ls = theta_ls)
-    # pseudo_lrm <- lapply(pseudo_y, function(df) lrm.fit(df[["x"]], df[["y"]], weights = df[["wt"]])[["coefficients"]])
-    # beta <- vapply(pseudo_lrm, function(x) x[[length(x)]], double(1L))
-    # alpha <- lapply(pseudo_lrm, function(x) c(Inf, x[-length(x)], -Inf))
+    # pseudo_tab <- lapply(y, dummy_fun_ltm)
+    # pseudo_y <- lapply(pseudo_tab, tab2df_ltm, theta_ls = theta_ls)
+    # pseudo_logit <- lapply(pseudo_y, function(df) glm.fit(cbind(1, df[["x"]]),
+    #                                                       df[["y"]], weights = df[["wt"]], family = quasibinomial("logit"))[["coefficients"]])
+    # beta <- vapply(pseudo_logit, function(x) x[2L], double(1L))
+    # alpha <- vapply(pseudo_logit, function(x) x[1L], double(1L))
 
     # EAP and VAP estimates of latent preferences
     theta_eap <- t(theta_ls %*% w)
@@ -181,6 +159,7 @@ hgrm2 <- function(y, x = NULL, z = NULL, item_coefs, control = list()) {
     # variance regression
     gamma <- lm_opr %*% theta_eap
     r2 <- (theta_eap - x %*% gamma)^2 + theta_vap
+
     if (ncol(z)==1) lambda <- log(mean(r2)) else{
       s2 <- glm.fit(x = z, y = r2, intercept = FALSE, family = Gamma(link = "log"))[["fitted.values"]]
       loglik <- -0.5 * (log(s2) + r2/s2)
@@ -205,11 +184,12 @@ hgrm2 <- function(y, x = NULL, z = NULL, item_coefs, control = list()) {
     fitted_var <- exp(as.double(z %*% lambda))
     cat(".")
 
+    # check convergence
     if (sqrt(mean((gamma/gamma_prev - 1)^2)) < con[["eps"]]) {
       cat("\n converged at iteration", iter, "\n")
       break
     } else if (iter == con[["max_iter"]]) {
-      stop("algorithm did not converge; try increasing `max_iter` or decreasing `eps`")
+      stop("algorithm did not converge; try increasing max_iter.")
       break
     } else next
   }
@@ -220,7 +200,7 @@ hgrm2 <- function(y, x = NULL, z = NULL, item_coefs, control = list()) {
   # inference
   pik <- matrix(unlist(Map(partial(dnorm, x = theta_ls), mean = fitted_mean, sd = sqrt(fitted_var))),
                 N, K, byrow = TRUE) * matrix(qw_ls, N, K, byrow = TRUE)
-  Lijk <- lapply(theta_ls, function(theta_k) exp(loglik_grm(alpha = alpha, beta = beta, rep(theta_k, N))))  # K-list
+  Lijk <- lapply(theta_ls, function(theta_k) exp(loglik_ltm(alpha = alpha, beta = beta, rep(theta_k, N))))  # K-list
   Lik <- vapply(Lijk, compose(exp, partial(rowSums, na.rm = TRUE), log), double(N))
   Li <- rowSums(Lik * pik)
 
@@ -228,37 +208,35 @@ hgrm2 <- function(y, x = NULL, z = NULL, item_coefs, control = list()) {
   log_Lik <- sum(log(Li))
 
   # outer product of gradients
-  environment(sj_ab_grm) <- environment(si_gamma) <- environment(si_lambda) <- environment()
-  # s_ab <- unname(Reduce(rbind, lapply(1:J, sj_ab_grm)))
+  environment(dalpha_ltm) <- environment(sj_ab_ltm) <- environment(si_gamma) <- environment(si_lambda) <- environment()
+  dalpha <- dalpha_ltm(alpha, beta)  # K*J matrix
+  # s_ab <- unname(Reduce(cbind, lapply(1:J, sj_ab_ltm)))
   s_gamma <- vapply(1:N, si_gamma, double(p))
   s_lambda <- vapply(1:N, si_lambda, double(q))
 
-  # covariance matrix
   s_all <- rbind(s_gamma, s_lambda)
   s_all[is.na(s_all)] <- 0
   covmat <- tryCatch(solve(tcrossprod(s_all)),
                      error = function(e) {warning("The information matrix is singular; SE calculation failed.");
                        matrix(NA, nrow(s_all), nrow(s_all))})
+  se_all <- sqrt(diag(covmat))
 
   # reorganize se_all
-  sH <- sum(H)
+  sH <- 2 * J
   gamma_indices <- (sH - 1):(sH + p - 2)
   lambda_indices <- (sH + p - 1):(sH + p + q - 2)
   se_all <- c(rep(0, sH), sqrt(diag(covmat)))
 
   # name se_all and covmat
-  names_ab <- unlist(lapply(names(alpha), function(x) {
-    tmp <- alpha[[x]]
-    paste(x, c(paste0("y>=", seq(2, length(tmp)-1)), "Dscrmn"))
-  }))
+  names_ab <- paste(rep(names(alpha), each = 2), c("Diff", "Dscrmn"))
   names(se_all) <- c(names_ab, names(gamma), names(lambda))
   rownames(covmat) <- colnames(covmat) <- c(names(gamma), names(lambda))
 
   # item coefficients
-  coef_item <- Map(function(a, b) c(a[-c(1L, length(a))], Dscrmn = b), alpha, beta)
+  coefs_item <- Map(function(a, b) c(Diff = a, Dscrmn = b), alpha, beta)
 
   # all coefficients
-  coef_all <- c(unlist(coef_item), gamma, lambda)
+  coef_all <- c(unlist(coefs_item), gamma, lambda)
   coefs <- data.frame(Estimate = coef_all, Std_Error = se_all, z_value = coef_all/se_all,
                       p_value = 2 * (1 - pnorm(abs(coef_all/se_all))))
   rownames(coefs) <- names(se_all)
@@ -270,6 +248,6 @@ hgrm2 <- function(y, x = NULL, z = NULL, item_coefs, control = list()) {
   # output
   out <- list(coefficients = coefs, scores = theta, vcov = covmat, log_Lik = log_Lik,
               N = N, J = J, H = H, ylevels = ylevels, p = p, q = q, control = con, call = cl)
-  class(out) <- c("hgrm2", "hIRT")
+  class(out) <- c("hltm", "hIRT")
   out
 }
