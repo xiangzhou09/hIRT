@@ -120,7 +120,7 @@ hgrm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
   init <- match.arg(init)
 
   # control parameters
-  con <- list(max_iter = 150, max_iter2 = 15, eps = 1e-04, eps2 = 0.001, K = 21, C = 3)
+  con <- list(max_iter = 150, max_iter2 = 15, eps = 1e-03, eps2 = 1e-03, K = 25, C = 4)
   con[names(control)] <- control
 
   # set environments for utility functions
