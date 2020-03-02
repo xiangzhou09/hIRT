@@ -1,0 +1,81 @@
+#################################################################################################################
+# Project: Group-based Public Opinion Polarization in Multi-Party Systems
+# Authors: Tanja Burri, Lukas F. Stoetzer and Denise Traber
+#################################################################################################################
+
+## Prepare ========
+
+# Update to current version of  hIRT
+# devtools::install_github("xiangzhou09/hIRT")
+
+# Load libraries
+rm(list = ls())
+devtools::document()
+library(tidyverse)
+# library(hIRT)
+library(splines)
+library(ltm)
+
+# Read in data
+load("./data-raw/lukas/Data_VoxitSub.Rdata")
+
+# Set Random Number Generator
+set.seed(3523598)
+
+## HIRT One dimensional Model - Year, Party ========
+
+# Prepare Data
+voxit_sub <-  voxit_sub %>% drop_na(year,party_id) # listwise
+
+# Select
+items <-  voxit_sub %>% dplyr::select(starts_with("item"))
+
+# Prepare year Splines
+year_bs_educ <- bs((voxit_sub$year), degree = 2, df = 8) # Year Splines
+
+# Model 1: PID Models + year
+mdl_pid <- model.matrix(~ party_id*year_bs_educ,data = voxit_sub)
+
+id_train <- sample.int(nrow(items), 20000)
+id_train <- 1:nrow(items)
+
+y <- items[id_train, ]; z <- x <- mdl_pid[id_train, ]
+init <- "glm"; constr <- "latent_scale"; beta_set = 1L;
+sign_set = TRUE;
+
+# Estimation HGRM
+res_pid_all <- hgrm(y = items, x = mdl_pid, z = mdl_pid, init="glm")
+
+## HIRT Two-dimensional Model - Year, Party ========
+
+# Select Cultural Items
+sel_items_cult <- items_dat %>% dplyr::filter(class == "cult") %>% pull(item_nam) %>% as.character()
+items_cult <-  voxit_sub %>% dplyr::select(sel_items_cult)
+
+# Estimation HGRM cultural Issues
+res_pid_cult <- hgrm(y = items_cult, x=mdl_pid, z=mdl_pid, init="glm")
+
+# Select Econ Items
+sel_items_econ <- items_dat %>% filter(class == "econ") %>% pull(item_nam) %>% as.character()
+items_econ <-  voxit_sub %>%  dplyr::select(sel_items_econ)
+
+# Estimation HGRM economic Issues
+res_pid_econ <- hgrm(y = items_econ, x=mdl_pid, z=mdl_pid, init="glm")
+
+
+## HIRT One dimensional Model - Year, Party, Education ========
+
+# Model 2: PID Models + month + education (Tertiary)
+# mdl_pid_educ <- model.matrix(~ party_id*year_bs_educ*educ,data = voxit_subsamp_educ)
+
+# Estimation HGRM
+# res_pid_all_educ <- hgrm(y = items_educ, x=mdl_pid_educ, z=mdl_pid_educ)
+# print(res_pid_all_educ)
+
+## HIRT Two-dimensional Model - Year, Party, Education ========
+
+# Estimation HGRM cultural Issues
+# res_pid_cult <- hgrm(y = items_cult, x=mdl_pid_educ, z=mdl_pid_educ)
+
+# Estimation HGRM economic Issues
+# res_pid_econ <- hgrm(y = items_econ, x=mdl_pid_educ, z=mdl_pid_educ)

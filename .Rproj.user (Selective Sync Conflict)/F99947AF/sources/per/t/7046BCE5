@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1582835930097.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "440607485",
+    "id" : "7046BCE5",
+    "lastKnownWriteTime" : 1582838289,
+    "last_content_update" : 1582838289931,
+    "path" : "C:/Users/xiz225/Dropbox/R Packages/hIRT/data-raw/lukas/Estimation_XZed.R",
+    "project_path" : "data-raw/lukas/Estimation_XZed.R",
+    "properties" : {
+        "cursorPosition" : "47,0",
+        "scrollLine" : "39"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
