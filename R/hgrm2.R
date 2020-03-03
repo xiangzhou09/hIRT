@@ -270,6 +270,6 @@ hgrm2 <- function(y, x = NULL, z = NULL, item_coefs, control = list()) {
   # output
   out <- list(coefficients = coefs, scores = theta, vcov = covmat, log_Lik = log_Lik,
               N = N, J = J, H = H, ylevels = ylevels, p = p, q = q, control = con, call = cl)
-  class(out) <- c("hgrm2", "hIRT")
+  class(out) <- c("hgrm", "hIRT")
   out
 }
