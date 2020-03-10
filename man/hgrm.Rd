@@ -8,7 +8,7 @@ hgrm(
   y,
   x = NULL,
   z = NULL,
-  constr = c("latent_scale", "items"),
+  constr = c("prior_var", "latent_scale", "items"),
   beta_set = 1L,
   sign_set = TRUE,
   init = c("naive", "glm", "irt"),
@@ -24,9 +24,10 @@ mean of the latent preference. If not supplied, only the intercept term is inclu
 \item{z}{An optional model matrix, including the intercept term, that predicts the
 variance of the latent preference. If not supplied, only the intercept term is included.}
 
-\item{constr}{The type of constraints used to identify the model, either "latent_scale"
+\item{constr}{The type of constraints used to identify the model: "latent_scale", "latent_scale2",
 or "items". The default, "latent_scale" constrains the mean of latent preferences
-to zero and the geometric mean of prior variance to one. "items" places constraints
+to zero and the geometric mean of prior variance to one; "latent_scale2" constrains the
+latent preferences to have mean zero and unit variance;  "items" places constraints
 on item parameters instead and sets the mean of item difficulty parameters to zero
 and the geometric mean of the discrimination parameters to one.}
 
