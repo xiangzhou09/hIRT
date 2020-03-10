@@ -12,9 +12,10 @@
 #'   mean of the latent preference. If not supplied, only the intercept term is included.
 #' @param z An optional model matrix, including the intercept term, that predicts the
 #'   variance of the latent preference. If not supplied, only the intercept term is included.
-#' @param constr The type of constraints used to identify the model, either "latent_scale"
+#' @param constr The type of constraints used to identify the model: "latent_scale", "latent_scale2",
 #'   or "items". The default, "latent_scale" constrains the mean of latent preferences
-#'   to zero and the geometric mean of prior variance to one. "items" places constraints
+#'   to zero and the geometric mean of prior variance to one; "latent_scale2" constrains the
+#'   latent preferences to have mean zero and unit variance;  "items" places constraints
 #'   on item parameters instead and sets the mean of item difficulty parameters to zero
 #'   and the geometric mean of the discrimination parameters to one.
 #' @param beta_set The index of the item for which the discrimination parameter is
@@ -76,7 +77,7 @@
 #' nes_m1 <- hgrm(y, x, z)
 #' nes_m1
 
-hgrm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
+hgrm <- function(y, x = NULL, z = NULL, constr = c("prior_var", "latent_scale", "items"),
                  beta_set = 1L, sign_set = TRUE, init = c("naive", "glm", "irt"),
                  control = list()) {
 
@@ -252,8 +253,8 @@ hgrm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
     } else next
   }
 
-  gamma <- setNames(as.double(gamma), paste("x", colnames(x), sep = "_"))
-  lambda <- setNames(as.double(lambda), paste("z", colnames(z), sep = "_"))
+  gamma <- setNames(as.double(gamma), paste("x", colnames(x), sep = ""))
+  lambda <- setNames(as.double(lambda), paste("z", colnames(z), sep = ""))
 
   # inference
   pik <- matrix(unlist(Map(partial(dnorm, x = theta_ls), mean = fitted_mean, sd = sqrt(fitted_var))),

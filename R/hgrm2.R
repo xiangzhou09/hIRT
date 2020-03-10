@@ -214,8 +214,8 @@ hgrm2 <- function(y, x = NULL, z = NULL, item_coefs, control = list()) {
     } else next
   }
 
-  gamma <- setNames(as.double(gamma), paste("x", colnames(x), sep = "_"))
-  lambda <- setNames(as.double(lambda), paste("z", colnames(z), sep = "_"))
+  gamma <- setNames(as.double(gamma), paste("x", colnames(x), sep = ""))
+  lambda <- setNames(as.double(lambda), paste("z", colnames(z), sep = ""))
 
   # inference
   pik <- matrix(unlist(Map(partial(dnorm, x = theta_ls), mean = fitted_mean, sd = sqrt(fitted_var))),
