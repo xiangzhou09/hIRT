@@ -10,7 +10,7 @@ Description: Implementation of a class of hierarchical item response
   implementation includes both the two-parameter latent trait model for binary data and the
   graded response model for ordinal data. Both are fitted via the Expectation-Maximization (EM)
   algorithm. Asymptotic standard errors are derived from the observed information
-  matrix. Both 
+  matrix.
 Depends:
     R (>= 3.4.0),
     stats
