@@ -1,6 +1,9 @@
-# hIRT 0.2.2
+# hIRT 0.3.0
 
-* changed default x and z values in hgrm() and hltm()
+* added README.md illustrating package usage
+* added the constr parameter in hgrm() and hltm()
+* added the hgrm2() and hltm2() functions
+* deleted the predict_hIRT() function
 
 
 

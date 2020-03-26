@@ -1,0 +1,109 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+# hIRT: hierarchical item response theory (IRT) models
+
+hIRT is an R package that implements a class of hierarchical item response theory (IRT) models where both the mean and the variance of the latent "ability parameters" may depend on observed covariates. The current implementation includes both the two-parameter latent trait model for binary data (`hltm()` and `hltm2()`) and the graded response model for ordinal data (`hgrm()` and `hgrm2()`). Both are fitted via the Expectation-Maximization (EM) algorithm. Asymptotic standard errors are derived from the observed information matrix. 
+
+**Main Reference**: Zhou, Xiang. 2019. "Hierarchical Item Response Models for Analyzing Public Opinion." Political Analysis, 27(4): 481-502. Available at: <https://doi.org/10.1017/pan.2018.63>
+
+Full paper with technical appendix is available at: <https://scholar.harvard.edu/files/xzhou/files/Zhou2019_hIRT.pdf>
+
+## Installation
+
+You can install the released version of hIRT from [CRAN](https://CRAN.R-project.org) with:
+
+``` r
+install.packages("hIRT")
+```
+
+And the development version from [GitHub](https://github.com/) with:
+
+``` r
+# install.packages("devtools")
+devtools::install_github("xiangzhou09/hIRT")
+```
+## Example
+
+The following example illustrates how the `hgrm()` function can be used to examine the effects of education and party affiliation on economic ideology, a latent variable gauged by a number of survey items in the American National Election Studies (ANES), 2008. Documentation of the dataset `nes_econ2008` can be accessed by running `?nes_econ2008` in R after loading the `hIRT` package.
+
+```{r example}
+library(hIRT)
+
+# survey items used to measure economic ideology
+y <- nes_econ2008[, -(1:3)]
+
+# predictors for the mean of economic ideology
+x <- model.matrix( ~ party * educ, nes_econ2008)
+
+# predictors for the variance of economic ideology
+z <- model.matrix( ~ party, nes_econ2008)
+
+# fitting a hierarhical graded response model
+nes_m1 <- hgrm(y, x, z)
+
+nes_m1
+```
+
+The output from `hgrm` is an object of class `hIRT`. The `print()` method for `hIRT` outputs the regression tables for the mean regression and the variance regression.
+
+## Extracting coefficients
+
+The `coef_item()`, `coef_mean()`, and `coef_var()` functions can be used to extract coefficient tables for item parameters, the mean regression, and the variance regression respectively. 
+
+
+```{r coef}
+coef_item(nes_m1)
+
+coef_mean(nes_m1)
+
+coef_var(nes_m1)
+```
+
+## Latent scores
+
+The `latent_scores()` function can be used to extract the Expected A Posteriori (EAP) estimates of the latent ability parameters, along with their "prior" estimates (without the random effects). In this example, the latent ability estimates can be interpreted as the estimated ideological positions of ANES respondents on economic issues.
+
+```{r latent}
+
+pref <- latent_scores(nes_m1)
+
+summary(pref)
+```
+
+## Identification constraints.
+
+The `constr` parameter in the `hgrm()` and `hltm()` function can be used to specify the type of constraints used to identify the model. The default option, `"latent_scale"`, constrains the mean of the latent ability parameters to zero and the geometric mean of their prior variance to one; Alternatively, `"items"` sets the mean of the item difficulty parameters to zero and the geometric mean of the discrimination parameters to one.
+
+In practice, one may want to interpret the effects of the mean predictors (in the above example, education and party affiliation) on the standard deviation scale of the latent trait. This can be easily achieved through rescaling their point estimates and standard errors.
+
+```{r constr, message=FALSE}
+
+library(dplyr)
+
+total_sd <- sqrt(var(pref$post_mean) + mean(pref$post_sd^2))
+
+coef_mean_sd_scale <- coef_mean(nes_m1) %>%
+  mutate(`Estimate` = `Estimate`/total_sd,
+         `Std_Error` = `Std_Error`/total_sd)
+
+coef_mean_sd_scale
+
+```
+
+## hIRT with fixed item parameters
+
+Sometimes, the researcher might want to fit the hIRT models using a set of fixed item parameters, for example, to make results comparable across different studies. The `hgrm2()` and `hltm2()` functions can be used for this purpose. They are illustrated in more detail in the package documentation.
+
