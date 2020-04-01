@@ -19,6 +19,8 @@ Imports:
     rms (>= 5.1-1),
     ltm (>= 1.1-1),
     Matrix (>= 1.2-10)
+Suggests:
+    ggplot2
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
