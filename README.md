@@ -70,19 +70,19 @@ nes_m1
 #> hgrm(y = y, x = x, z = z)
 #> 
 #> Mean Regression:
-#>                          Estimate Std_Error z_value p_value
-#> x_(Intercept)              -0.480     0.105  -4.570   0.000
-#> x_partyindependent          0.386     0.086   4.473   0.000
-#> x_partyRepublican           1.133     0.135   8.408   0.000
-#> x_educ2                     0.037     0.079   0.467   0.641
-#> x_partyindependent:educ2    0.235     0.117   2.007   0.045
-#> x_partyRepublican:educ2     0.428     0.148   2.886   0.004
+#>                         Estimate Std_Error z_value p_value
+#> x(Intercept)              -0.480     0.105  -4.570   0.000
+#> xpartyindependent          0.386     0.086   4.473   0.000
+#> xpartyRepublican           1.133     0.135   8.408   0.000
+#> xeduc2                     0.037     0.079   0.467   0.641
+#> xpartyindependent:educ2    0.235     0.117   2.007   0.045
+#> xpartyRepublican:educ2     0.428     0.148   2.886   0.004
 #> 
 #> Variance Regression:
-#>                    Estimate Std_Error z_value p_value
-#> z_(Intercept)        -0.097     0.139  -0.697   0.486
-#> z_partyindependent    0.166     0.100   1.661   0.097
-#> z_partyRepublican     0.172     0.126   1.373   0.170
+#>                   Estimate Std_Error z_value p_value
+#> z(Intercept)        -0.097     0.139  -0.697   0.486
+#> zpartyindependent    0.166     0.100   1.661   0.097
+#> zpartyRepublican     0.172     0.126   1.373   0.170
 #> 
 #> Log Likelihood: -16259.16
 ```
@@ -172,19 +172,19 @@ coef_item(nes_m1)
 #> Dscrmn    1.028        NA      NA      NA
 
 coef_mean(nes_m1)
-#>                          Estimate Std_Error z_value p_value
-#> x_(Intercept)              -0.480     0.105  -4.570   0.000
-#> x_partyindependent          0.386     0.086   4.473   0.000
-#> x_partyRepublican           1.133     0.135   8.408   0.000
-#> x_educ2                     0.037     0.079   0.467   0.641
-#> x_partyindependent:educ2    0.235     0.117   2.007   0.045
-#> x_partyRepublican:educ2     0.428     0.148   2.886   0.004
+#>                         Estimate Std_Error z_value p_value
+#> x(Intercept)              -0.480     0.105  -4.570   0.000
+#> xpartyindependent          0.386     0.086   4.473   0.000
+#> xpartyRepublican           1.133     0.135   8.408   0.000
+#> xeduc2                     0.037     0.079   0.467   0.641
+#> xpartyindependent:educ2    0.235     0.117   2.007   0.045
+#> xpartyRepublican:educ2     0.428     0.148   2.886   0.004
 
 coef_var(nes_m1)
-#>                    Estimate Std_Error z_value p_value
-#> z_(Intercept)        -0.097     0.139  -0.697   0.486
-#> z_partyindependent    0.166     0.100   1.661   0.097
-#> z_partyRepublican     0.172     0.126   1.373   0.170
+#>                   Estimate Std_Error z_value p_value
+#> z(Intercept)        -0.097     0.139  -0.697   0.486
+#> zpartyindependent    0.166     0.100   1.661   0.097
+#> zpartyRepublican     0.172     0.126   1.373   0.170
 ```
 
 ## Latent scores
@@ -231,17 +231,18 @@ library(dplyr)
 total_sd <- sqrt(var(pref$post_mean) + mean(pref$post_sd^2))
 
 coef_mean_sd_scale <- coef_mean(nes_m1) %>%
+  tibble::rownames_to_column("term") %>%
   mutate(`Estimate` = `Estimate`/total_sd,
          `Std_Error` = `Std_Error`/total_sd)
 
 coef_mean_sd_scale
-#>      Estimate  Std_Error z_value p_value
-#> 1 -0.42437486 0.09283200  -4.570   0.000
-#> 2  0.34126812 0.07603383   4.473   0.000
-#> 3  1.00170150 0.11935543   8.408   0.000
-#> 4  0.03271223 0.06984503   0.467   0.641
-#> 5  0.20776686 0.10344137   2.007   0.045
-#> 6  0.37840092 0.13084892   2.886   0.004
+#>                      term    Estimate  Std_Error z_value p_value
+#> 1            x(Intercept) -0.42437486 0.09283200  -4.570   0.000
+#> 2       xpartyindependent  0.34126812 0.07603383   4.473   0.000
+#> 3        xpartyRepublican  1.00170150 0.11935543   8.408   0.000
+#> 4                  xeduc2  0.03271223 0.06984503   0.467   0.641
+#> 5 xpartyindependent:educ2  0.20776686 0.10344137   2.007   0.045
+#> 6  xpartyRepublican:educ2  0.37840092 0.13084892   2.886   0.004
 ```
 
 ## hIRT with fixed item parameters

@@ -96,6 +96,7 @@ library(dplyr)
 total_sd <- sqrt(var(pref$post_mean) + mean(pref$post_sd^2))
 
 coef_mean_sd_scale <- coef_mean(nes_m1) %>%
+  tibble::rownames_to_column("term") %>%
   mutate(`Estimate` = `Estimate`/total_sd,
          `Std_Error` = `Std_Error`/total_sd)
 
