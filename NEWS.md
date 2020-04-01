@@ -1,9 +1,6 @@
-# hIRT 0.3.0
+# hIRT 0.3.1
 
-* added README.md illustrating package usage
-* added the constr parameter in hgrm() and hltm()
-* added the hgrm2() and hltm2() functions
-* deleted the predict_hIRT() function
+* fixed bug in README.md
 
 
 

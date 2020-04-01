@@ -1,7 +1,7 @@
 Package: hIRT
 Type: Package
 Title: Hierarchical Item Response Theory Models
-Version: 0.3.0
+Version: 0.3.1
 Authors@R: person("Xiang", "Zhou", email = "xiang_zhou@fas.harvard.edu",
   role = c("aut", "cre"))
 Description: Implementation of a class of hierarchical item response
