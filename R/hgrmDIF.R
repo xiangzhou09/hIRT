@@ -1,22 +1,22 @@
-#' Fitting Hierarchical Graded Response Models (for Ordinal Responses)
+#' Test Differential Item Functioning in Hierarchical Graded Response Models
 #'
-#' \code{hgrm} fits a hierarchical graded response model in which both
-#' the mean and the variance of the latent preference (ability parameter)
-#' may depend on person-specific covariates (\code{x} and \code{z}).
-#' Specifically, the mean is specified as a linear combination of \code{x}
-#' and the log of the variance is specified as a linear combination of
-#' \code{z}. Nonresponses are treated as missing at random.
+#' \code{hgrmDIF} fits a hierarchical graded response model similar to hgrm(), but person-specific
+#' covariates \code{x} are allowed to affect item responses directly (not via the latent preference).
+#' This model can be used to test for the presence of differential item functioning.
 #'
 #' @param y A data frame or matrix of item responses.
 #' @param x An optional model matrix, including the intercept term, that predicts the
 #'   mean of the latent preference. If not supplied, only the intercept term is included.
 #' @param z An optional model matrix, including the intercept term, that predicts the
 #'   variance of the latent preference. If not supplied, only the intercept term is included.
+#' @param items_dif The indices of the items for which differential item functioning is tested.
+#' @param form_dif Form of differential item functioning being tested. Either "uniform" or "non-uniform."
 #' @param constr The type of constraints used to identify the model: "latent_scale",
 #'   or "items". The default, "latent_scale" constrains the mean of latent preferences
 #'   to zero and the geometric mean of prior variance to one; "items" places constraints
 #'   on item parameters instead and sets the mean of item difficulty parameters to zero
-#'   and the geometric mean of the discrimination parameters to one.
+#'   and the geometric mean of the discrimination parameters to one. Currently, only "latent_scale"
+#'   is supported in hgrmDIF().
 #' @param beta_set The index of the item for which the discrimination parameter is
 #'   restricted to be positive (or negative). It may take any integer value from
 #'   1 to \code{ncol(y)}.
@@ -61,7 +61,6 @@
 #'  \item{q}{The number of predictors for the variance equation.}
 #'  \item{control}{List of control values.}
 #'  \item{call}{The matched call.}
-#' @references Zhou, Xiang. 2019. "\href{https://doi.org/10.1017/pan.2018.63}{Hierarchical Item Response Models for Analyzing Public Opinion.}" Political Analysis.
 #' @importFrom rms lrm.fit
 #' @importFrom pryr compose
 #' @importFrom pryr partial
@@ -76,9 +75,9 @@
 #' nes_m1 <- hgrm(y, x, z)
 #' nes_m1
 
-hgrm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
-                 beta_set = 1L, sign_set = TRUE, init = c("naive", "glm", "irt"),
-                 control = list()) {
+hgrmDIF <- function(y, x = NULL, z = NULL, items_dif = 1L, form_dif = c("uniform", "non-uniform"),
+                    constr = c("latent_scale"), beta_set = 1L, sign_set = TRUE,
+                    init = c("naive", "glm", "irt"), control = list()) {
 
   # match call
   cl <- match.call()
@@ -112,7 +111,7 @@ hgrm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
   colnames(x) <- colnames(x) %||% paste0("x", 1:p)
   colnames(z) <- colnames(z) %||% paste0("x", 1:q)
 
-  # check beta_set and sign_set
+  # check item, beta_set and sign_set
   stopifnot(beta_set %in% 1:J, is.logical(sign_set))
 
   # check constraint
@@ -124,7 +123,7 @@ hgrm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
   con[names(control)] <- control
 
   # set environments for utility functions
-  environment(loglik_grm) <- environment(theta_post_grm) <- environment(dummy_fun_grm) <- environment(tab2df_grm) <- environment()
+  environment(loglik_grmDIF) <- environment(theta_post_grmDIF) <- environment(dummy_fun_grm) <- environment(tab2df_grm) <- environment()
 
   # GL points
   K <- con[["K"]]
@@ -161,6 +160,10 @@ hgrm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
 
   }
 
+  eta <- vector(mode = "list", length = J)
+  for(j in seq(1, J)) eta[[j]] <- rep(0, p - 1)
+  names(eta) <- names(alpha) <- names(H)
+
   # initial values of gamma and lambda
   lm_opr <- tcrossprod(solve(crossprod(x)), x)
   gamma <- lm_opr %*% theta_eap
@@ -176,20 +179,45 @@ hgrm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
     beta_prev <- beta
     gamma_prev <- gamma
     lambda_prev <- lambda
+    eta_prev <- eta
 
     # construct w_ik
-    posterior <- Map(theta_post_grm, theta_ls, qw_ls)
+    # list of length K, each element an N-vector
+    posterior <- Map(theta_post_grmDIF, theta_ls, qw_ls)
+    # K-by-N matrix
     w <- {
       tmp <- matrix(unlist(posterior), N, K)
       t(sweep(tmp, 1, rowSums(tmp), FUN = "/"))
     }
 
-    # maximization
-    pseudo_tab <- Map(dummy_fun_grm, y, H)
-    pseudo_y <- lapply(pseudo_tab, tab2df_grm, theta_ls = theta_ls)
-    pseudo_lrm <- lapply(pseudo_y, function(df) lrm_fit(df["x"], df[["y"]], weights = df[["wt"]])[["coefficients"]])
-    beta <- vapply(pseudo_lrm, function(x) x[[length(x)]], double(1L))
-    alpha <- lapply(pseudo_lrm, function(x) c(Inf, x[-length(x)], -Inf))
+    # maximization with DIF
+    pseudo_lrm <- vector(mode = "list", length = J)
+    for (j in seq(1, J)){
+
+
+      y_lrm <- rep(y[[j]], each = K)
+      x_lrm <- cbind(theta = rep(theta_ls, N), apply(x[, -1, drop = FALSE], 2, rep, each = K))
+      w_lrm <- as.vector(w)
+
+      pseudo_lrm[[j]] <- lrm_fit(x_lrm, y_lrm, weights = w_lrm)[["coefficients"]]
+
+    }
+
+    beta <- vapply(pseudo_lrm, function(xx) xx[["theta"]], double(1L))
+    eta <- lapply(pseudo_lrm, function(xx) xx[colnames(x)[-1]])
+    alpha <- Map(function(xx, H_j) c(Inf, xx[1:(H_j-1)], -Inf), pseudo_lrm, H)
+    names(alpha) <- names(H)
+
+    # # maximization in hgrm()
+    # # list of length J, each element a K-by-H_j matrix containing
+    # # the pseudo number of people with theta^k choosing h
+    # pseudo_tab <- Map(dummy_fun_grm, y, H)
+    # # list of length J, each element a data frame with K*H_j units and 3 columns: y, x(theta), and wt
+    # pseudo_y <- lapply(pseudo_tab, tab2df_grm, theta_ls = theta_ls)
+    # # weighted lrm on each element of pseudo_y
+    # pseudo_lrm <- lapply(pseudo_y, function(df) lrm_fit(df[["x"]], df[["y"]], weights = df[["wt"]])[["coefficients"]])
+    # beta <- vapply(pseudo_lrm, function(x) x[[length(x)]], double(1L))
+    # alpha <- lapply(pseudo_lrm, function(x) c(Inf, x[-length(x)], -Inf))
 
     # EAP and VAP estimates of latent preferences
     theta_eap <- t(theta_ls %*% w)
@@ -256,9 +284,10 @@ hgrm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
   lambda <- setNames(as.double(lambda), paste("z", colnames(z), sep = ""))
 
   # inference
+  # pik equals p_ik * w_k in Zhou2019supp
   pik <- matrix(unlist(Map(partial(dnorm, x = theta_ls), mean = fitted_mean, sd = sqrt(fitted_var))),
                 N, K, byrow = TRUE) * matrix(qw_ls, N, K, byrow = TRUE)
-  Lijk <- lapply(theta_ls, function(theta_k) exp(loglik_grm(alpha = alpha, beta = beta, rep(theta_k, N))))  # K-list
+  Lijk <- lapply(theta_ls, function(theta_k) exp(loglik_grmDIF(alpha = alpha, beta = beta, eta = eta, rep(theta_k, N))))  # K-list
   Lik <- vapply(Lijk, compose(exp, partial(rowSums, na.rm = TRUE), log), double(N))
   Li <- rowSums(Lik * pik)
 
@@ -266,14 +295,14 @@ hgrm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
   log_Lik <- sum(log(Li))
 
   # outer product of gradients
-  environment(sj_ab_grm) <- environment(si_gamma) <- environment(si_lambda) <- environment()
-  s_ab <- unname(Reduce(rbind, lapply(1:J, sj_ab_grm)))
+  environment(sj_ab_grmDIF) <- environment(sj_ab_grm) <- environment(si_gamma) <- environment(si_lambda) <- environment()
+  s_abe <- unname(Reduce(rbind, lapply(1:J, sj_ab_grmDIF)))
   s_lambda <- s_gamma <- NULL
   s_gamma <- vapply(1:N, si_gamma, double(p))
   s_lambda <- vapply(1:N, si_lambda, double(q))
 
   # covariance matrix and standard errors
-  s_all <- rbind(s_ab[-c(1L, nrow(s_ab)), , drop = FALSE], s_gamma, s_lambda)
+  s_all <- rbind(s_abe[-c(1L, nrow(s_abe)), , drop = FALSE], s_gamma, s_lambda)
   s_all[is.na(s_all)] <- 0
   covmat <- tryCatch(solve(tcrossprod(s_all)),
                      error = function(e) {warning("The information matrix is singular; SE calculation failed.");
@@ -281,92 +310,27 @@ hgrm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
   se_all <- sqrt(diag(covmat))
 
   # reorganize se_all
-  sH <- sum(H)
+  sH <- sum(H) + (p - 1) * J
   gamma_indices <- (sH - 1):(sH + p - 2)
   lambda_indices <- (sH + p - 1):(sH + p + q - 2)
   se_all <- c(NA, se_all[1:(sH-2)], NA, se_all[gamma_indices], se_all[lambda_indices])
 
   # name se_all and covmat
-  names_ab <- unlist(lapply(names(alpha), function(x) {
-    tmp <- alpha[[x]]
-    paste(x, c(names(tmp)[-c(1L, length(tmp))], "Dscrmn"))
+  names(alpha) <- names(H)
+  names_abe <- unlist(lapply(names(alpha), function(xx) {
+    tmp <- alpha[[xx]]
+    paste(xx, c(names(tmp)[-c(1L, length(tmp))], colnames(x)[-1], "Dscrmn"))
   }))
-  names(se_all) <- c(names_ab, names(gamma), names(lambda))
-  rownames(covmat) <- colnames(covmat) <- c(names_ab[-c(1L, length(names_ab))], names(gamma), names(lambda))
+  names(se_all) <- c(names_abe, names(gamma), names(lambda))
+  rownames(covmat) <- colnames(covmat) <- c(names_abe[-c(1L, length(names_abe))], names(gamma), names(lambda))
 
   # item coefficients
-  coef_item <- Map(function(a, b) c(a[-c(1L, length(a))], Dscrmn = b), alpha, beta)
+  coef_item <- Map(function(a, b, c) c(a[-c(1L, length(a))], c, Dscrmn = b), alpha, beta, eta)
 
   # all coefficients
   coef_all <- c(unlist(coef_item), gamma, lambda)
   coefs <- data.frame(Estimate = coef_all, Std_Error = se_all, z_value = coef_all/se_all,
                       p_value = 2 * (1 - pnorm(abs(coef_all/se_all))))
-  rownames(coefs) <- names(se_all)
-
-  # item constraints
-  if (constr == "items"){
-
-    gamma0_prev <- gamma[[1L]]
-
-    # location constraint
-    alpha_sum <- sum(vapply(alpha, function(x) sum(x[-c(1L, length(x))]), double(1L)))
-    beta_sum <- sum((H-1) * beta)
-    c1 <- alpha_sum/beta_sum
-    gamma[[1L]] <- gamma[[1L]] + c1
-    alpha <- Map(function(x, y) x - c1 * y, alpha, beta)
-
-    # scale constraint
-    c2 <- 2 * mean(log(abs(beta)))
-    gamma <- gamma * exp(c2/2)
-    lambda[[1L]] <- lambda[[1L]] + c2
-    beta <- beta / exp(c2/2)
-
-    # fitted means and variances
-    fitted_mean <- as.double(x %*% gamma)
-    fitted_var <- exp(as.double(z %*% lambda))
-
-    # theta_eap and theta_vap
-    theta_eap <- (theta_eap - gamma0_prev) * exp(c2/2) + gamma[[1L]]
-    theta_vap <- theta_vap * (exp(c2/2))^2
-
-    # covmat for new parameterization
-    tmp_fun <- function(d) {
-      mat <- diag(d)
-      mat[d, d] <- exp(-c2/2)
-      mat[1:(d-1), d] <- rep(-c1, d-1)
-      mat
-    }
-    A <- Reduce(Matrix::bdiag, lapply(H, tmp_fun))
-    A2 <- A[seq(2, nrow(A)-1), seq(2, ncol(A)-1)]
-    B <- Matrix::bdiag(exp(c2/2) * diag(p), diag(q))
-    C <- Matrix::bdiag(A2, B)
-    covmat <- C %*% Matrix::tcrossprod(covmat, C)
-
-    se_all <- sqrt(Matrix::diag(covmat))
-
-    # reorganize se_all
-    sH <- sum(H)
-    gamma_indices <- (sH - 1):(sH + p - 2)
-    lambda_indices <- (sH + p - 1):(sH + p + q - 2)
-    se_all <- c(NA, se_all[1:(sH-2)], NA, se_all[gamma_indices], se_all[lambda_indices])
-
-    # name se_all and covmat
-    names_ab <- unlist(lapply(names(alpha), function(x) {
-      tmp <- alpha[[x]]
-      paste(x, c(names(tmp)[-c(1L, length(tmp))], "Dscrmn"))
-    }))
-    names(se_all) <- c(names_ab, names(gamma), names(lambda))
-    rownames(covmat) <- colnames(covmat) <- c(names_ab[-c(1L, length(names_ab))], names(gamma), names(lambda))
-
-    # item coefficients
-    coef_item <- Map(function(a, b) c(a[-c(1L, length(a))], Dscrmn = b), alpha, beta)
-
-    # all coefficients
-    coef_all <- c(unlist(coef_item), gamma, lambda)
-    coefs <- data.frame(Estimate = coef_all, Std_Error = se_all, z_value = coef_all/se_all,
-                        p_value = 2 * (1 - pnorm(abs(coef_all/se_all))))
-    rownames(coefs) <- names(se_all)
-  }
 
   # ability parameter estimates
   theta <- data.frame(post_mean = theta_eap, post_sd = sqrt(theta_vap),
@@ -375,7 +339,7 @@ hgrm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
   # output
   out <- list(coefficients = coefs, scores = theta, vcov = covmat, log_Lik = log_Lik, constr = constr,
               N = N, J = J, H = H, ylevels = ylevels, p = p, q = q, control = con, call = cl)
-  class(out) <- c("hgrm", "hIRT")
+  class(out) <- c("hgrmDIF")
   out
 }
 
