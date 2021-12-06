@@ -1,6 +1,7 @@
 utils::globalVariables(c("H", "J", "K", "Li", "Lijk", "Lik", "N",
                   "alpha", "dalpha", "lambda", "p", "q", "pik",
-                  "theta_ls", "w", "x", "y", "z", "fitted_mean", "fitted_var"))
+                  "theta_ls", "w", "x", "y", "z", "fitted_mean", "fitted_var",
+                  "form_dif", "items_dif"))
 
 # median impute
 impute <- function(vec){

@@ -59,6 +59,7 @@
 #'  \item{ylevels}{A list showing the levels of the factorized response categories.}
 #'  \item{p}{The number of predictors for the mean equation.}
 #'  \item{q}{The number of predictors for the variance equation.}
+#'  \item{coef_item}{Item coefficient estimates.}
 #'  \item{control}{List of control values.}
 #'  \item{call}{The matched call.}
 #' @importFrom rms lrm.fit
@@ -117,13 +118,14 @@ hgrmDIF <- function(y, x = NULL, z = NULL, items_dif = 1L, form_dif = c("uniform
   # check constraint
   constr <- match.arg(constr)
   init <- match.arg(init)
+  form_dif <- match.arg(form_dif)
 
   # control parameters
   con <- list(max_iter = 150, max_iter2 = 15, eps = 1e-03, eps2 = 1e-03, K = 25, C = 4)
   con[names(control)] <- control
 
   # set environments for utility functions
-  environment(loglik_grmDIF) <- environment(theta_post_grmDIF) <- environment(dummy_fun_grm) <- environment(tab2df_grm) <- environment()
+  environment(xDIF) <- environment(loglik_grmDIF) <- environment(theta_post_grmDIF) <- environment(dummy_fun_grm) <- environment(tab2df_grm) <- environment()
 
   # GL points
   K <- con[["K"]]
@@ -160,8 +162,19 @@ hgrmDIF <- function(y, x = NULL, z = NULL, items_dif = 1L, form_dif = c("uniform
 
   }
 
-  eta <- vector(mode = "list", length = J)
-  for(j in seq(1, J)) eta[[j]] <- rep(0, p - 1)
+  # initialization of xDIFnames, x_lrm, and eta
+  tmp_theta <- rep(theta_ls, N)
+  tmp_x <- apply(x[, -1, drop = FALSE], 2, rep, each = K)
+  if(form_dif == "uniform") {
+    xDIFnames <- colnames(x)[-1]
+    x_lrm <- cbind(tmp_theta, tmp_x)
+    eta <- lapply(1:J, function(j) if(j %in% items_dif) rep(0, p - 1) else double(0L))
+  } else{
+    xDIFnames <- c(colnames(x)[-1], paste0("Dscrmn * ", colnames(x)[-1]))
+    x_lrm <- cbind(tmp_theta, tmp_x, tmp_theta * tmp_x)
+    eta <- lapply(1:J, function(j) if(j %in% items_dif) rep(0, 2 * (p - 1)) else double(0L))
+  }
+  colnames(x_lrm) <- c("theta", xDIFnames)
   names(eta) <- names(alpha) <- names(H)
 
   # initial values of gamma and lambda
@@ -170,6 +183,7 @@ hgrmDIF <- function(y, x = NULL, z = NULL, items_dif = 1L, form_dif = c("uniform
   lambda <- rep(0, q)
   fitted_mean <- as.double(x %*% gamma)
   fitted_var <- rep(1, N)
+  pseudo_lrm <- vector(mode = "list", length = J)
 
   # EM algorithm
   for (iter in seq(1, con[["max_iter"]])) {
@@ -191,20 +205,14 @@ hgrmDIF <- function(y, x = NULL, z = NULL, items_dif = 1L, form_dif = c("uniform
     }
 
     # maximization with DIF
-    pseudo_lrm <- vector(mode = "list", length = J)
+    w_lrm <- as.vector(w)
     for (j in seq(1, J)){
-
-
       y_lrm <- rep(y[[j]], each = K)
-      x_lrm <- cbind(theta = rep(theta_ls, N), apply(x[, -1, drop = FALSE], 2, rep, each = K))
-      w_lrm <- as.vector(w)
-
-      pseudo_lrm[[j]] <- lrm_fit(x_lrm, y_lrm, weights = w_lrm)[["coefficients"]]
-
+      pseudo_lrm[[j]] <- if(j %in% items_dif) lrm_fit(x_lrm, y_lrm, weights = w_lrm)[["coefficients"]] else
+        lrm_fit(cbind(theta = tmp_theta), y_lrm, weights = w_lrm)[["coefficients"]]
     }
-
     beta <- vapply(pseudo_lrm, function(xx) xx[["theta"]], double(1L))
-    eta <- lapply(pseudo_lrm, function(xx) xx[colnames(x)[-1]])
+    eta <- lapply(1:J, function(j) if(j %in% items_dif) pseudo_lrm[[j]][-(1:H[[j]])] else double(0L))
     alpha <- Map(function(xx, H_j) c(Inf, xx[1:(H_j-1)], -Inf), pseudo_lrm, H)
     names(alpha) <- names(H)
 
@@ -310,16 +318,19 @@ hgrmDIF <- function(y, x = NULL, z = NULL, items_dif = 1L, form_dif = c("uniform
   se_all <- sqrt(diag(covmat))
 
   # reorganize se_all
-  sH <- sum(H) + (p - 1) * J
+  sH <- sum(H) + (p - 1) * length(items_dif) + (p - 1) * as.double(form_dif == "non-uniform") * length(items_dif)
   gamma_indices <- (sH - 1):(sH + p - 2)
   lambda_indices <- (sH + p - 1):(sH + p + q - 2)
   se_all <- c(NA, se_all[1:(sH-2)], NA, se_all[gamma_indices], se_all[lambda_indices])
 
   # name se_all and covmat
   names(alpha) <- names(H)
-  names_abe <- unlist(lapply(names(alpha), function(xx) {
-    tmp <- alpha[[xx]]
-    paste(xx, c(names(tmp)[-c(1L, length(tmp))], colnames(x)[-1], "Dscrmn"))
+  names_abe <- unlist(lapply(1:J, function(j) {
+    itemname <- names(alpha)[[j]]
+    tmp <- alpha[[j]]
+    if(j %in% items_dif) paste(itemname, c(names(tmp)[-c(1L, length(tmp))], xDIFnames, "Dscrmn")) else{
+      paste(itemname, c(names(tmp)[-c(1L, length(tmp))], "Dscrmn"))
+    }
   }))
   names(se_all) <- c(names_abe, names(gamma), names(lambda))
   rownames(covmat) <- colnames(covmat) <- c(names_abe[-c(1L, length(names_abe))], names(gamma), names(lambda))
@@ -337,8 +348,10 @@ hgrmDIF <- function(y, x = NULL, z = NULL, items_dif = 1L, form_dif = c("uniform
                       prior_mean = fitted_mean, prior_sd = sqrt(fitted_var))
 
   # output
-  out <- list(coefficients = coefs, scores = theta, vcov = covmat, log_Lik = log_Lik, constr = constr,
-              N = N, J = J, H = H, ylevels = ylevels, p = p, q = q, control = con, call = cl)
+  out <- list(coefficients = coefs, scores = theta, vcov = covmat, log_Lik = log_Lik,
+              items_dif = items_dif,  form_dif = form_dif, constr = constr,
+              N = N, J = J, H = H, ylevels = ylevels, p = p, q = q, coef_item = coef_item,
+              control = con, call = cl)
   class(out) <- c("hgrmDIF")
   out
 }

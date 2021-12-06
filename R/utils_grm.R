@@ -86,13 +86,21 @@ sj_ab_grm <- function(j) {
     s <- sweep(rbind(s_alpha, s_beta), 2, rowSums(Lik * pik), FUN = "/")
 }
 
+
+xDIF <- function(theta_k){
+  if(form_dif == "uniform") x[, -1, drop = FALSE] else{
+    cbind(x[, -1, drop = FALSE], theta_k * x[, -1, drop = FALSE])
+  }
+}
+
 # log likelihood function (return N * J matrix) y for DIF, returns N*J data frame
 # alpha: length J list
 # beta: length J numeric vector
 # theta: length N numeric vector
 loglik_grmDIF <- function(alpha, beta, theta, eta) {
   util <- outer(theta, beta)
-  util2 <- vapply(1:length(eta), function(j) x[, -1, drop = FALSE] %*% eta[[j]], double(N))
+  tmp_x <- xDIF(theta)
+  util2 <- vapply(1:length(eta), function(j) if(j %in% items_dif) tmp_x %*% eta[[j]] else double(N), double(N))
   alpha_l <- simplify2array(unname(Map(function(x, y) x[y], alpha, y)))
   alpha_h <- simplify2array(unname(Map(function(x, y) x[y + 1L], alpha, y)))
   log(plogis(util + util2 + alpha_l) - plogis(util + util2 + alpha_h))
@@ -115,23 +123,34 @@ theta_post_grmDIF <- function(theta_k, qw_k) {
   exp(loglik + logPop)
 }
 
-
-# score function of alpha and beta (returns an H_j*N matrix) Lik: N*K
-# matrix pik: N*K matrix alpha: J-list beta: J-vector theta_ls: K-vector
+# score function of alpha and beta and eta (returns an ?*N matrix)
+# Lik: N*K matrix pik: N*K matrix alpha: J-list beta: J-vector theta_ls: K-vector
 sj_ab_grmDIF <- function(j) {
 
   temp2 <- array(0, c(N, K, H[[j]] + 1))
   h <- .subset2(y, j)
 
-  drv_h <- vapply(theta_ls, function(theta_k) exp(alpha[[j]][h] + beta[[j]] *
-                  theta_k + x[, -1, drop = FALSE] %*% eta[[j]])/
-                    (1 + exp(alpha[[j]][h] + beta[[j]] * theta_k + x[, -1, drop = FALSE] %*% eta[[j]]))^2,
-                  double(N))
+  if(j %in% items_dif){
 
-  drv_h_plus_one <- -vapply(theta_ls, function(theta_k) exp(alpha[[j]][h + 1L] + beta[[j]] *
-                  theta_k + x[, -1, drop = FALSE] %*% eta[[j]])/
-                    (1 + exp(alpha[[j]][h + 1L] + beta[[j]] * theta_k + x[, -1, drop = FALSE] %*% eta[[j]]))^2,
-                  double(N))
+    drv_h <- vapply(theta_ls, function(theta_k) exp(alpha[[j]][h] + beta[[j]] * theta_k +
+                                                      xDIF(theta_k) %*% eta[[j]])/
+                        (1 + exp(alpha[[j]][h] + beta[[j]] * theta_k + xDIF(theta_k) %*% eta[[j]]))^2,
+                    double(N))
+
+    drv_h_plus_one <- -vapply(theta_ls, function(theta_k) exp(alpha[[j]][h + 1L] + beta[[j]] * theta_k +
+                                                                xDIF(theta_k) %*% eta[[j]])/
+                                (1 + exp(alpha[[j]][h + 1L] + beta[[j]] * theta_k + xDIF(theta_k) %*% eta[[j]]))^2,
+                              double(N))
+    } else{
+
+      drv_h <- vapply(theta_ls, function(theta_k) exp(alpha[[j]][h] + beta[[j]] * theta_k)/
+                        (1 + exp(alpha[[j]][h] + beta[[j]] * theta_k))^2,
+                      double(N))
+
+      drv_h_plus_one <- -vapply(theta_ls, function(theta_k) exp(alpha[[j]][h + 1L] + beta[[j]] * theta_k)/
+                                  (1 + exp(alpha[[j]][h + 1L] + beta[[j]] * theta_k))^2,
+                                double(N))
+    }
   drv_h[h == 1, ] <- 0
   drv_h_plus_one[h == H[[j]], ] <- 0
 
@@ -150,9 +169,14 @@ sj_ab_grmDIF <- function(j) {
   temp2_beta <- drv_h + drv_h_plus_one
   s_beta <- rowSums(comp_a * matrix(theta_ls, N, K, byrow = TRUE) * temp2_beta)  # N-vector
 
-  s_eta <- vapply(1:(ncol(x)-1), function(i) rowSums(comp_a * matrix(x[, i + 1, drop = FALSE], N, K, byrow = FALSE) * temp2_beta),
-                  double(N))
-
-  s <- sweep(rbind(s_alpha, t(s_eta), s_beta), 2, rowSums(Lik * pik), FUN = "/")
+  if(j %in% items_dif){
+    s_eta <- vapply(1:(p-1), function(i) rowSums(comp_a * matrix(x[, i + 1, drop = FALSE], N, K, byrow = FALSE) * temp2_beta), double(N))
+    if(form_dif == "non-uniform"){
+      s_eta <- cbind(s_eta, vapply(1:(p-1), function(i) rowSums(comp_a * outer(x[, i + 1], theta_ls) * temp2_beta), double(N)))
+    }
+    s <- sweep(rbind(s_alpha, t(s_eta), s_beta), 2, rowSums(Lik * pik), FUN = "/")
+  } else{
+    s <- sweep(rbind(s_alpha, s_beta), 2, rowSums(Lik * pik), FUN = "/")
+  }
 }
 

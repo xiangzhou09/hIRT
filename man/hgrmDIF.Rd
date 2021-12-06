@@ -83,6 +83,7 @@ An object of class \code{hgrm}.
  \item{ylevels}{A list showing the levels of the factorized response categories.}
  \item{p}{The number of predictors for the mean equation.}
  \item{q}{The number of predictors for the variance equation.}
+ \item{coef_item}{Item coefficient estimates.}
  \item{control}{List of control values.}
  \item{call}{The matched call.}
 }
