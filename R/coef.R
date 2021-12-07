@@ -95,4 +95,3 @@ coef_var <- function(x, digits = 3) {
   lambda_indices <- (sH + x[["p"]] + 1):(sH + x[["p"]] + x[["q"]])
   round(x[["coefficients"]][lambda_indices, , drop = FALSE], digits = digits)
 }
-
