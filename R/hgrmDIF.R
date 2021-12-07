@@ -72,7 +72,7 @@
 #' @examples
 #' y <- nes_econ2008[, -(1:3)]
 #' x <- model.matrix( ~ party * educ, nes_econ2008)
-#' nes_m2 <- hgrmDIF(y, x, items_DIF = 1:2)
+#' nes_m2 <- hgrmDIF(y, x, items_dif = 1:2)
 #' coef_item(nes_m2)
 
 hgrmDIF <- function(y, x = NULL, z = NULL, items_dif = 1L, form_dif = c("uniform", "non-uniform"),

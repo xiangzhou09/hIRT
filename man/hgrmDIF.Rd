@@ -95,7 +95,6 @@ This model can be used to test for the presence of differential item functioning
 \examples{
 y <- nes_econ2008[, -(1:3)]
 x <- model.matrix( ~ party * educ, nes_econ2008)
-z <- model.matrix( ~ party, nes_econ2008)
-nes_m1 <- hgrm(y, x, z)
-nes_m1
+nes_m2 <- hgrmDIF(y, x, items_dif = 1:2)
+coef_item(nes_m2)
 }
