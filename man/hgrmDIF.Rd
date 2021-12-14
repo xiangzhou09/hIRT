@@ -8,6 +8,7 @@ hgrmDIF(
   y,
   x = NULL,
   z = NULL,
+  x0,
   items_dif = 1L,
   form_dif = c("uniform", "non-uniform"),
   constr = c("latent_scale"),
@@ -25,6 +26,8 @@ mean of the latent preference. If not supplied, only the intercept term is inclu
 
 \item{z}{An optional model matrix, including the intercept term, that predicts the
 variance of the latent preference. If not supplied, only the intercept term is included.}
+
+\item{x0}{A matrix specifying the covariates by which differential item functioning operates.}
 
 \item{items_dif}{The indices of the items for which differential item functioning is tested.}
 
@@ -83,6 +86,7 @@ An object of class \code{hgrm}.
  \item{ylevels}{A list showing the levels of the factorized response categories.}
  \item{p}{The number of predictors for the mean equation.}
  \item{q}{The number of predictors for the variance equation.}
+ \item{p0}{The number of predictors for items with DIF.}
  \item{coef_item}{Item coefficient estimates.}
  \item{control}{List of control values.}
  \item{call}{The matched call.}
