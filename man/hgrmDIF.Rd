@@ -2,7 +2,7 @@
 % Please edit documentation in R/hgrmDIF.R
 \name{hgrmDIF}
 \alias{hgrmDIF}
-\title{Test Differential Item Functioning in Hierarchical Graded Response Models}
+\title{Hierarchical Graded Response Models with Differential Item Functioning}
 \usage{
 hgrmDIF(
   y,
@@ -99,6 +99,6 @@ This model can be used to test for the presence of differential item functioning
 \examples{
 y <- nes_econ2008[, -(1:3)]
 x <- model.matrix( ~ party * educ, nes_econ2008)
-nes_m2 <- hgrmDIF(y, x, items_dif = 1:2)
+nes_m2 <- hgrmDIF(y, x, x0 = x[, -1, drop = FALSE], items_dif = 1:2)
 coef_item(nes_m2)
 }

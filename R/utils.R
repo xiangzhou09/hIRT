@@ -1,6 +1,6 @@
 utils::globalVariables(c("H", "J", "K", "Li", "Lijk", "Lik", "N",
-                  "alpha", "dalpha", "lambda", "eta", "p", "q", "pik",
-                  "theta_ls", "w", "x", "y", "z", "fitted_mean", "fitted_var",
+                  "alpha", "dalpha", "lambda", "eta", "p", "p0", "q", "pik",
+                  "theta_ls", "w", "x", "x0", "y", "z", "fitted_mean", "fitted_var",
                   "form_dif", "items_dif"))
 
 # median impute
