@@ -9,7 +9,8 @@
 #'   mean of the latent preference. If not supplied, only the intercept term is included.
 #' @param z An optional model matrix, including the intercept term, that predicts the
 #'   variance of the latent preference. If not supplied, only the intercept term is included.
-#' @param x0 A matrix specifying the covariates by which differential item functioning operates.
+#' @param x0 A matrix specifying the covariates by which differential item functioning operates. If not supplied,
+#'   \code{x0} is taken to be a matrix containing all predictors in \code{x} except the intercept.
 #' @param items_dif The indices of the items for which differential item functioning is tested.
 #' @param form_dif Form of differential item functioning being tested. Either "uniform" or "non-uniform."
 #' @param constr The type of constraints used to identify the model: "latent_scale",
@@ -74,10 +75,10 @@
 #' @examples
 #' y <- nes_econ2008[, -(1:3)]
 #' x <- model.matrix( ~ party * educ, nes_econ2008)
-#' nes_m2 <- hgrmDIF(y, x, x0 = x[, -1, drop = FALSE], items_dif = 1:2)
+#' nes_m2 <- hgrmDIF(y, x, items_dif = 1:2)
 #' coef_item(nes_m2)
 
-hgrmDIF <- function(y, x = NULL, z = NULL, x0,
+hgrmDIF <- function(y, x = NULL, z = NULL, x0 = x[, -1, drop = FALSE],
                     items_dif = 1L, form_dif = c("uniform", "non-uniform"),
                     constr = c("latent_scale"), beta_set = 1L, sign_set = TRUE,
                     init = c("naive", "glm", "irt"), control = list()) {
@@ -104,7 +105,6 @@ hgrmDIF <- function(y, x = NULL, z = NULL, x0,
   H <- vapply(y, max, integer(1L), na.rm = TRUE)
 
   # check x0
-  if(missing(x0)) stop("`x0` must be provided.")
   if(!is.matrix(x0)) x0 <- as.matrix(x0)
 
   # check x and z (x and z should contain an intercept column)

@@ -8,7 +8,7 @@ hgrmDIF(
   y,
   x = NULL,
   z = NULL,
-  x0,
+  x0 = x[, -1, drop = FALSE],
   items_dif = 1L,
   form_dif = c("uniform", "non-uniform"),
   constr = c("latent_scale"),
@@ -27,7 +27,8 @@ mean of the latent preference. If not supplied, only the intercept term is inclu
 \item{z}{An optional model matrix, including the intercept term, that predicts the
 variance of the latent preference. If not supplied, only the intercept term is included.}
 
-\item{x0}{A matrix specifying the covariates by which differential item functioning operates.}
+\item{x0}{A matrix specifying the covariates by which differential item functioning operates. If not supplied,
+\code{x0} is taken to be a matrix containing all predictors in \code{x} except the intercept.}
 
 \item{items_dif}{The indices of the items for which differential item functioning is tested.}
 
@@ -99,6 +100,6 @@ This model can be used to test for the presence of differential item functioning
 \examples{
 y <- nes_econ2008[, -(1:3)]
 x <- model.matrix( ~ party * educ, nes_econ2008)
-nes_m2 <- hgrmDIF(y, x, x0 = x[, -1, drop = FALSE], items_dif = 1:2)
+nes_m2 <- hgrmDIF(y, x, items_dif = 1:2)
 coef_item(nes_m2)
 }
