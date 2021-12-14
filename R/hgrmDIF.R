@@ -77,7 +77,7 @@
 #' nes_m2 <- hgrmDIF(y, x, items_dif = 1:2)
 #' coef_item(nes_m2)
 
-hgrmDIF <- function(y, x = NULL, z = NULL, x0,
+hgrmDIF <- function(y, x = NULL, z = NULL, x0 = x[, -1, drop = FALSE],
                     items_dif = 1L, form_dif = c("uniform", "non-uniform"),
                     constr = c("latent_scale"), beta_set = 1L, sign_set = TRUE,
                     init = c("naive", "glm", "irt"), control = list()) {
