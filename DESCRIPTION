@@ -24,6 +24,10 @@ Suggests:
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
+<<<<<<< HEAD
 RoxygenNote: 7.3.2
+=======
+RoxygenNote: 7.1.1
+>>>>>>> b33d90f13287f60f7feffd0c061858340dff40a6
 URL: http://github.com/xiangzhou09/hIRT
 BugReports: http://github.com/xiangzhou09/hIRT
