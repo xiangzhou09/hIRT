@@ -1,6 +1,6 @@
 #' Parameter Estimates from Hierarchical IRT Models.
 #'
-#' Parameter estimates from either \code{hltm} or \code{hgrm} models. \code{code_item}
+#' Parameter estimates from either \code{hltm} or \code{hgrm} or \code{hgrmDIF} models. \code{code_item}
 #' reports estimates of item parameters. \code{coef_mean} reports results for the mean equation.
 #' \code{coef_var} reports results for the variance equation.
 #'
@@ -21,18 +21,14 @@
 #' coef_item(nes_m1)
 coef_item <- function(x, by_item = TRUE, digits = 3) {
 
-  # check object
-  if (!inherits(x, "hIRT"))
-    stop("Use only with 'hIRT' objects.\n")
-
   if(inherits(x, "hgrm")){
     H <- unname(x[["H"]])
-    index <- findInterval(1:sum(H), c(1, cumsum(H)[-length(H)] + 1))
     xitem <- x[["coefficients"]][1:sum(H), , drop = FALSE]
     if (by_item == FALSE) return(round(xitem, digits))
+    index <- findInterval(1:sum(H), c(1, cumsum(H)[-length(H)] + 1))
     out <- split(xitem, index)
     for (i in seq_along(out)) {
-      tmp <- strsplit(rownames(out[[i]]), " ")
+      tmp <- strsplit(rownames(out[[i]]), "\\.")
       rownames(out[[i]]) <- vapply(tmp, function(x) x[length(x)], FUN.VALUE = character(1L))
       out[[i]] <- round(out[[i]], digits)
     }
@@ -43,7 +39,21 @@ coef_item <- function(x, by_item = TRUE, digits = 3) {
       return(round(xitem, digits))
     out <- split(xitem, rep(1:J, each = 2))
     for (i in 1:J) rownames(out[[i]]) <- c("Diff", "Dscrmn")
-  } else stop("Use only with 'hgrm' or 'hltm' objects.\n")
+  } else if (inherits(x, "hgrmDIF")){
+    H <- unname(x[["H"]])
+    p <- x[["p"]]
+    ncoefs <- vapply(x[["coef_item"]], length, integer(1L))
+    sH <- sum(ncoefs)
+    xitem <- x[["coefficients"]][1:sH, , drop = FALSE]
+    if (by_item == FALSE) return(round(xitem, digits))
+    index <- findInterval(1:sH, c(1, cumsum(ncoefs[-length(ncoefs)]) + 1))
+    out <- split(xitem, index)
+    for (i in seq_along(out)) {
+      tmp <- strsplit(rownames(out[[i]]), "\\.")
+      rownames(out[[i]]) <- vapply(tmp, function(x) x[length(x)], FUN.VALUE = character(1L))
+      out[[i]] <- round(out[[i]], digits)
+    }
+  } else stop("Use only with 'hgrm' or 'hltm' or `hgrmDIF` objects.\n")
 
   stats::setNames(out, names(x[["H"]]))
 }
@@ -55,11 +65,14 @@ coef_item <- function(x, by_item = TRUE, digits = 3) {
 #' @examples
 #' coef_mean(nes_m1)
 coef_mean <- function(x, digits = 3) {
-  if (!inherits(x, "hIRT"))
-    stop("Use only with 'hIRT' objects.\n")
+
   # if (x[["p"]] < 2) return(NULL)
   sH <- if (inherits(x, "hltm"))
-    2 * x[["J"]] else sum(x[["H"]])
+    2 * x[["J"]] else if (inherits(x, "hgrm"))
+      sum(x[["H"]]) else if (inherits(x, "hgrmDIF"))
+        sum(vapply(x[["coef_item"]], length, integer(1L))) else{
+          stop("Use only with 'hgrm' or 'hltm' or `hgrmDIF` objects.\n")
+        }
   gamma_indices <- (sH + 1):(sH + x[["p"]])
   round(x[["coefficients"]][gamma_indices, , drop = FALSE], digits = digits)
 }
@@ -71,12 +84,14 @@ coef_mean <- function(x, digits = 3) {
 #' @examples
 #' coef_var(nes_m1)
 coef_var <- function(x, digits = 3) {
-  if (!inherits(x, "hIRT"))
-    stop("Use only with 'hIRT' objects.\n")
+
   # if (x[["q"]] < 2) return(NULL)
   sH <- if (inherits(x, "hltm"))
-    2 * x[["J"]] else sum(x[["H"]])
+    2 * x[["J"]] else if (inherits(x, "hgrm"))
+      sum(x[["H"]]) else if (inherits(x, "hgrmDIF"))
+        sum(vapply(x[["coef_item"]], length, integer(1L))) else{
+          stop("Use only with 'hgrm' or 'hltm' or `hgrmDIF` objects.\n")
+        }
   lambda_indices <- (sH + x[["p"]] + 1):(sH + x[["p"]] + x[["q"]])
   round(x[["coefficients"]][lambda_indices, , drop = FALSE], digits = digits)
 }
-

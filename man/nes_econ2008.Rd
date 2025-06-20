@@ -4,7 +4,8 @@
 \name{nes_econ2008}
 \alias{nes_econ2008}
 \title{Public Attitudes on Economic Issues in ANES 2008}
-\format{A data frame with 2268 rows and 13 variables: \describe{
+\format{
+A data frame with 2268 rows and 13 variables: \describe{
   \item{gender}{gender. 1: male; 2: female}
   \item{party}{party identification: Democrat, independent, or Republican}
   \item{educ}{education. 1: high school or less; 2: some college or above}
@@ -18,7 +19,8 @@
   \item{FS_welfare3}{Federal spending on welfare, 3 categories}
   \item{FS_envir3}{Federal spending on environment, 3 categories}
   \item{FS_socsec3}{Federal spending on Social Security, 3 categories}
-  }}
+  }
+}
 \usage{
 nes_econ2008
 }

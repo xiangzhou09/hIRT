@@ -26,7 +26,7 @@ Parameter estimates, standard errors, z values, and p values
   by_item = FALSE}).
 }
 \description{
-Parameter estimates from either \code{hltm} or \code{hgrm} models. \code{code_item}
+Parameter estimates from either \code{hltm} or \code{hgrm} or \code{hgrmDIF} models. \code{code_item}
 reports estimates of item parameters. \code{coef_mean} reports results for the mean equation.
 \code{coef_var} reports results for the variance equation.
 }
