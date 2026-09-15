@@ -46,9 +46,6 @@ after loading the `hIRT` package.
 
 ``` r
 library(hIRT)
-#> Registered S3 method overwritten by 'pryr':
-#>   method      from
-#>   print.bytes Rcpp
 
 # survey items used to measure economic ideology
 y <- nes_econ2008[, -(1:3)]
