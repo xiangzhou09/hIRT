@@ -9,3 +9,4 @@
 ^\.Rhistory$
 ^.*\.RData$
 ^CRAN-SUBMISSION$
+^\.github$
