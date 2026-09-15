@@ -95,5 +95,5 @@ nes_m1 <- hgrm(y, x, z)
 nes_m1
 }
 \references{
-Zhou, Xiang. 2019. "\href{https://doi.org/10.1017/pan.2018.63}{Hierarchical Item Response Models for Analyzing Public Opinion.}" Political Analysis.
+Zhou, Xiang. 2019. "Hierarchical Item Response Models for Analyzing Public Opinion." Political Analysis. \doi{10.1017/pan.2018.63}
 }

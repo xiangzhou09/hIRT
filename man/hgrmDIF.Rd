@@ -98,8 +98,10 @@ covariates \code{x} are allowed to affect item responses directly (not via the l
 This model can be used to test for the presence of differential item functioning.
 }
 \examples{
+\donttest{
 y <- nes_econ2008[, -(1:3)]
 x <- model.matrix( ~ party * educ, nes_econ2008)
 nes_m2 <- hgrmDIF(y, x, items_dif = 1:2)
 coef_item(nes_m2)
+}
 }

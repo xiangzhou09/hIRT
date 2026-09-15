@@ -66,17 +66,17 @@
 #'  \item{control}{List of control values.}
 #'  \item{call}{The matched call.}
 #' @importFrom rms lrm.fit
-#' @importFrom pryr compose
-#' @importFrom pryr partial
 #' @importFrom ltm grm
 #' @importFrom ltm ltm
 #' @import stats
 #' @export
 #' @examples
+#' \donttest{
 #' y <- nes_econ2008[, -(1:3)]
 #' x <- model.matrix( ~ party * educ, nes_econ2008)
 #' nes_m2 <- hgrmDIF(y, x, items_dif = 1:2)
 #' coef_item(nes_m2)
+#' }
 
 hgrmDIF <- function(y, x = NULL, z = NULL, x0 = x[, -1, drop = FALSE],
                     items_dif = 1L, form_dif = c("uniform", "non-uniform"),
@@ -301,10 +301,10 @@ hgrmDIF <- function(y, x = NULL, z = NULL, x0 = x[, -1, drop = FALSE],
 
   # inference
   # pik equals p_ik * w_k in Zhou2019supp
-  pik <- matrix(unlist(Map(partial(dnorm, x = theta_ls), mean = fitted_mean, sd = sqrt(fitted_var))),
+  pik <- matrix(unlist(Map(function(mean, sd) dnorm(theta_ls, mean = mean, sd = sd), mean = fitted_mean, sd = sqrt(fitted_var))),
                 N, K, byrow = TRUE) * matrix(qw_ls, N, K, byrow = TRUE)
   Lijk <- lapply(theta_ls, function(theta_k) exp(loglik_grmDIF(alpha = alpha, beta = beta, eta = eta, rep(theta_k, N))))  # K-list
-  Lik <- vapply(Lijk, compose(exp, partial(rowSums, na.rm = TRUE), log), double(N))
+  Lik <- vapply(Lijk, function(L) exp(rowSums(log(L), na.rm = TRUE)), double(N))
   Li <- rowSums(Lik * pik)
 
   # log likelihood

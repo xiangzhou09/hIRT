@@ -24,10 +24,8 @@
 #'  \item{q}{The number of predictors for the variance equation.}
 #'  \item{control}{List of control values.}
 #'  \item{call}{The matched call.}
-#' @references Zhou, Xiang. 2019. "\href{https://doi.org/10.1017/pan.2018.63}{Hierarchical Item Response Models for Analyzing Public Opinion.}" Political Analysis.
+#' @references Zhou, Xiang. 2019. "Hierarchical Item Response Models for Analyzing Public Opinion." Political Analysis. \doi{10.1017/pan.2018.63}
 #' @importFrom rms lrm.fit
-#' @importFrom pryr compose
-#' @importFrom pryr partial
 #' @import stats
 #' @export
 #' @examples
@@ -213,10 +211,10 @@ hltm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
   lambda <- setNames(as.double(lambda), paste("z", colnames(z), sep = ""))
 
   # inference
-  pik <- matrix(unlist(Map(partial(dnorm, x = theta_ls), mean = fitted_mean, sd = sqrt(fitted_var))),
+  pik <- matrix(unlist(Map(function(mean, sd) dnorm(theta_ls, mean = mean, sd = sd), mean = fitted_mean, sd = sqrt(fitted_var))),
                 N, K, byrow = TRUE) * matrix(qw_ls, N, K, byrow = TRUE)
   Lijk <- lapply(theta_ls, function(theta_k) exp(loglik_ltm(alpha = alpha, beta = beta, rep(theta_k, N))))  # K-list
-  Lik <- vapply(Lijk, compose(exp, partial(rowSums, na.rm = TRUE), log), double(N))
+  Lik <- vapply(Lijk, function(L) exp(rowSums(log(L), na.rm = TRUE)), double(N))
   Li <- rowSums(Lik * pik)
 
   # log likelihood

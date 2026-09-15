@@ -15,7 +15,6 @@ Depends:
     R (>= 3.4.0),
     stats
 Imports:
-    pryr (>= 0.1.2),
     rms (>= 5.1-1),
     ltm (>= 1.1-1),
     Matrix (>= 1.2-10)
@@ -24,6 +23,6 @@ Suggests:
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.3.2
-URL: http://github.com/xiangzhou09/hIRT
-BugReports: http://github.com/xiangzhou09/hIRT
+RoxygenNote: 7.3.3
+URL: https://github.com/xiangzhou09/hIRT
+BugReports: https://github.com/xiangzhou09/hIRT/issues
