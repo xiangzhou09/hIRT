@@ -20,12 +20,15 @@ We also corrected several documented default values of control parameters
 
 ## Test environments
 * local Windows 11, R 4.5.1
+* win-builder (devel and release)
 
 ## R CMD check results
 
 0 errors | 0 warnings | 1 note
 
 * New submission (package was archived on CRAN).
+* Possibly misspelled words in DESCRIPTION: Zhou. This is the author's surname
+  in the added method reference, Zhou (2019), and is spelled correctly.
 
 ## Downstream dependencies
 
