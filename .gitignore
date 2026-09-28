@@ -5,7 +5,8 @@
 .Ruserdata
 data-raw
 CRAN-RELEASE
-cran-comments
+CRAN-SUBMISSION
+cran-comments.md
 inst/doc
 hIRT.Rproj
 .Rproj.user
