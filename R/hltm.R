@@ -82,7 +82,8 @@ hltm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
   init <- match.arg(init)
 
   # control parameters
-  con <- list(max_iter = 150, max_iter2 = 15, eps = 1e-03, eps2 = 1e-03, K = 25, C = 4)
+  con <- list(max_iter = 150, max_iter2 = 15, eps = 1e-03, eps2 = 1e-03, K = 25, C = 4,
+              verbose = FALSE)
   con[names(control)] <- control
 
   # set environments for utility functions
@@ -195,11 +196,11 @@ hltm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
       fitted_mean <- as.double(x %*% gamma)
       fitted_var <- exp(as.double(z %*% lambda))
 
-      cat(".")
+      if (con[["verbose"]]) cat(".")
 
       # check convergence
       if (sqrt(mean((beta - beta_prev)^2)) < con[["eps"]]) {
-          cat("\n converged at iteration", iter, "\n")
+          if (con[["verbose"]]) cat("\n converged at iteration", iter, "\n")
           break
       } else if (iter == con[["max_iter"]]) {
           stop("algorithm did not converge; try increasing max_iter.")

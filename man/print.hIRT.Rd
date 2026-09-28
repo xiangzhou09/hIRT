@@ -13,6 +13,11 @@
 
 \item{...}{further arguments passed to \code{\link{print}}.}
 }
+\value{
+The input object \code{x}, returned invisibly. The function is called
+  for its side effect of printing the call, the mean and variance regression
+  coefficients, and the log likelihood of the fitted model.
+}
 \description{
 Printing an object of class \code{hIRT}
 }

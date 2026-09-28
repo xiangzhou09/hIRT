@@ -27,7 +27,7 @@ the item difficulty parameter and item discrimination parameter.}
   EM algorithm. Specifically, iterations continue until the Euclidean
   distance between \eqn{\beta_{n}} and \eqn{\beta_{n-1}} falls under \code{eps},
   where \eqn{\beta} is the vector of item discrimination parameters.
-  \code{eps}=1e-4 by default.}
+  \code{eps}=1e-3 by default.}
  \item{max_iter2}{The maximum number of iterations of the conditional
    maximization procedures for updating \eqn{\gamma} and \eqn{\lambda}.
    The default is 15.}
@@ -36,8 +36,10 @@ the item difficulty parameter and item discrimination parameter.}
    \eqn{\lambda}. Specifically, iterations continue until the Euclidean
   distance between two consecutive log likelihoods falls under \code{eps2}.
   \code{eps2}=1e-3 by default.}
- \item{K}{Number of Gauss-Legendre quadrature points for the E-step. The default is 21.}
- \item{C}{[-C, C] sets the range of integral in the E-step. \code{C}=3 by default.}
+ \item{K}{Number of Gauss-Legendre quadrature points for the E-step. The default is 25.}
+ \item{C}{[-C, C] sets the range of integral in the E-step. \code{C}=4 by default.}
+ \item{verbose}{Logical. Should the progress of the EM algorithm be printed
+  to the console? \code{FALSE} by default.}
 }}
 }
 \value{

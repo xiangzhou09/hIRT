@@ -98,7 +98,8 @@ hltm2 <- function(y, x = NULL, z = NULL, item_coefs, control = list()) {
   colnames(z) <- colnames(z) %||% paste0("x", 1:q)
 
   # control parameters
-  con <- list(max_iter = 150, max_iter2 = 15, eps = 1e-03, eps2 = 1e-03, K = 25, C = 4)
+  con <- list(max_iter = 150, max_iter2 = 15, eps = 1e-03, eps2 = 1e-03, K = 25, C = 4,
+              verbose = FALSE)
   con[names(control)] <- control
 
   # set environments for utility functions
@@ -180,11 +181,11 @@ hltm2 <- function(y, x = NULL, z = NULL, item_coefs, control = list()) {
 
     fitted_mean <- as.double(x %*% gamma)
     fitted_var <- exp(as.double(z %*% lambda))
-    cat(".")
+    if (con[["verbose"]]) cat(".")
 
     # check convergence
     if (sqrt(mean((gamma/gamma_prev - 1)^2)) < con[["eps"]]) {
-      cat("\n converged at iteration", iter, "\n")
+      if (con[["verbose"]]) cat("\n converged at iteration", iter, "\n")
       break
     } else if (iter == con[["max_iter"]]) {
       stop("algorithm did not converge; try increasing max_iter.")

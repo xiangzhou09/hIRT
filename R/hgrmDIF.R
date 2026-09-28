@@ -35,7 +35,7 @@
 #'   EM algorithm. Specifically, iterations continue until the Euclidean
 #'   distance between \eqn{\beta_{n}} and \eqn{\beta_{n-1}} falls under \code{eps},
 #'   where \eqn{\beta} is the vector of item discrimination parameters.
-#'   \code{eps}=1e-4 by default.}
+#'   \code{eps}=1e-3 by default.}
 #'  \item{max_iter2}{The maximum number of iterations of the conditional
 #'    maximization procedures for updating \eqn{\gamma} and \eqn{\lambda}.
 #'    The default is 15.}
@@ -44,8 +44,10 @@
 #'    \eqn{\lambda}. Specifically, iterations continue until the Euclidean
 #'   distance between two consecutive log likelihoods falls under \code{eps2}.
 #'   \code{eps2}=1e-3 by default.}
-#'  \item{K}{Number of Gauss-Legendre quadrature points for the E-step. The default is 21.}
-#'  \item{C}{[-C, C] sets the range of integral in the E-step. \code{C}=3 by default.}
+#'  \item{K}{Number of Gauss-Legendre quadrature points for the E-step. The default is 25.}
+#'  \item{C}{[-C, C] sets the range of integral in the E-step. \code{C}=4 by default.}
+#'  \item{verbose}{Logical. Should the progress of the EM algorithm be printed
+#'   to the console? \code{FALSE} by default.}
 #' }
 #'
 #' @return An object of class \code{hgrm}.
@@ -129,7 +131,8 @@ hgrmDIF <- function(y, x = NULL, z = NULL, x0 = x[, -1, drop = FALSE],
   form_dif <- match.arg(form_dif)
 
   # control parameters
-  con <- list(max_iter = 150, max_iter2 = 15, eps = 1e-03, eps2 = 1e-03, K = 25, C = 4)
+  con <- list(max_iter = 150, max_iter2 = 15, eps = 1e-03, eps2 = 1e-03, K = 25, C = 4,
+              verbose = FALSE)
   con[names(control)] <- control
 
   # set environments for utility functions
@@ -284,11 +287,11 @@ hgrmDIF <- function(y, x = NULL, z = NULL, x0 = x[, -1, drop = FALSE],
     # cat(beta, "\n")
     # cat(abs(beta - beta_prev), "\n")
 
-    cat(".")
+    if (con[["verbose"]]) cat(".")
 
     # check convergence
     if (sqrt(mean((beta - beta_prev)^2)) < con[["eps"]]) {
-      cat("\n converged at iteration", iter, "\n")
+      if (con[["verbose"]]) cat("\n converged at iteration", iter, "\n")
       break
     } else if (iter == con[["max_iter"]]) {
       stop("algorithm did not converge; try increasing `max_iter` or decreasing `eps`")
