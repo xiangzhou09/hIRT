@@ -62,6 +62,7 @@ hltm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
   if (!is.na(invalid <- match(TRUE, vapply(y, invalid_ltm, logical(1L)))))
     stop(paste(names(y)[invalid], "is not a dichotomous variable"))
   H <- vapply(y, max, double(1L), na.rm = TRUE) + 1
+  Y <- y_mat(y) + 1L
 
   # check x and z (x and z should contain an intercept column)
   x <- x %||% as.matrix(rep(1, N))
@@ -85,9 +86,6 @@ hltm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
   con <- list(max_iter = 150, max_iter2 = 15, eps = 1e-03, eps2 = 1e-03, K = 25, C = 4,
               verbose = FALSE)
   con[names(control)] <- control
-
-  # set environments for utility functions
-  environment(loglik_ltm) <- environment(theta_post_ltm) <- environment(dummy_fun_ltm) <- environment(tab2df_ltm) <- environment()
 
   # GL points
   K <- con[["K"]]
@@ -135,47 +133,21 @@ hltm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
       lambda_prev <- lambda
 
       # construct w_ik
-      posterior <- Map(theta_post_ltm, theta_ls, qw_ls)
-      w <- {
-          tmp <- matrix(unlist(posterior), N, K)
-          t(sweep(tmp, 1, rowSums(tmp), FUN = "/"))
-      }
+      w <- estep_grm(Y, ltm_alpha(alpha), beta, theta_ls, qw_ls, fitted_mean, fitted_var)[["w"]]
 
       # maximization
-      pseudo_tab <- lapply(y, dummy_fun_ltm)
-      pseudo_y <- lapply(pseudo_tab, tab2df_ltm, theta_ls = theta_ls)
-      pseudo_logit <- lapply(pseudo_y, function(df) glm.fit(cbind(1, df[["x"]]),
-          df[["y"]], weights = df[["wt"]], family = quasibinomial("logit"))[["coefficients"]])
-      beta <- vapply(pseudo_logit, function(x) x[2L], double(1L))
-      alpha <- vapply(pseudo_logit, function(x) x[1L], double(1L))
+      ab <- mstep_grm(Y, w, setNames(rep(2L, J), names(y)), theta_ls, ltm_alpha(alpha), beta)
+      alpha <- vapply(ab[["alpha"]], `[[`, double(1L), 2L)
+      beta <- ab[["beta"]]
 
       # EAP and VAP estimates of latent preferences
       theta_eap <- t(theta_ls %*% w)
       theta_vap <- t(theta_ls^2 %*% w) - theta_eap^2
 
       # variance regression
-      gamma <- lm_opr %*% theta_eap
-      r2 <- (theta_eap - x %*% gamma)^2 + theta_vap
-
-      if (ncol(z)==1) lambda <- log(mean(r2)) else{
-        s2 <- glm.fit(x = z, y = r2, intercept = FALSE, family = Gamma(link = "log"))[["fitted.values"]]
-        loglik <- -0.5 * (log(s2) + r2/s2)
-        LL0 <- sum(loglik)
-        dLL <- 1
-        for (m in seq(1, con[["max_iter2"]])) {
-            gamma <- lm.wfit(x, theta_eap, w = 1/s2)[["coefficients"]]
-            r2 <- (theta_eap - x %*% gamma)^2 + theta_vap
-            var_reg <- glm.fit(x = z, y = r2, intercept = FALSE, family = Gamma(link = "log"))
-            s2 <- var_reg[["fitted.values"]]
-            loglik <- -0.5 * (log(s2) + r2/s2)
-            LL_temp <- sum(loglik)
-            dLL <- LL_temp - LL0
-            if (dLL < con[["eps2"]])
-                break
-            LL0 <- LL_temp
-        }
-        lambda <- var_reg[["coefficients"]]
-      }
+      vr <- var_regression(x, z, theta_eap, theta_vap, lm_opr, con)
+      gamma <- vr[["gamma"]]
+      lambda <- vr[["lambda"]]
 
       # location constraint
       tmp <- mean(x %*% gamma)
@@ -212,21 +184,16 @@ hltm <- function(y, x = NULL, z = NULL, constr = c("latent_scale", "items"),
   lambda <- setNames(as.double(lambda), paste("z", colnames(z), sep = ""))
 
   # inference
-  pik <- matrix(unlist(Map(function(mean, sd) dnorm(theta_ls, mean = mean, sd = sd), mean = fitted_mean, sd = sqrt(fitted_var))),
-                N, K, byrow = TRUE) * matrix(qw_ls, N, K, byrow = TRUE)
-  Lijk <- lapply(theta_ls, function(theta_k) exp(loglik_ltm(alpha = alpha, beta = beta, rep(theta_k, N))))  # K-list
-  Lik <- vapply(Lijk, function(L) exp(rowSums(log(L), na.rm = TRUE)), double(N))
-  Li <- rowSums(Lik * pik)
+  sc <- scores_grm(Y, ltm_alpha(alpha), beta, theta_ls, qw_ls, fitted_mean, fitted_var, x, z,
+                   rep(2L, J))
 
   # log likelihood
-  log_Lik <- sum(log(Li))
+  log_Lik <- sc[["loglik"]]
 
   # outer product of gradients
-  environment(dalpha_ltm) <- environment(sj_ab_ltm) <- environment(si_gamma) <- environment(si_lambda) <- environment()
-  dalpha <- dalpha_ltm(alpha, beta)  # K*J matrix
-  s_ab <- unname(Reduce(cbind, lapply(1:J, sj_ab_ltm)))
-  s_gamma <- vapply(1:N, si_gamma, double(p))
-  s_lambda <- vapply(1:N, si_lambda, double(q))
+  s_ab <- t(sc[["s_item"]])
+  s_gamma <- sc[["s_gamma"]]
+  s_lambda <- sc[["s_lambda"]]
 
   s_all <- rbind(t(s_ab)[-c(1L, ncol(s_ab)), , drop = FALSE], s_gamma, s_lambda)
   s_all[is.na(s_all)] <- 0

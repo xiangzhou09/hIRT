@@ -10,3 +10,8 @@ cran-comments.md
 inst/doc
 hIRT.Rproj
 .Rproj.user
+
+# compiled code
+src/*.o
+src/*.so
+src/*.dll
