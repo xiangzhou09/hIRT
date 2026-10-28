@@ -105,6 +105,7 @@ hgrmDIF <- function(y, x = NULL, z = NULL, x0 = x[, -1, drop = FALSE],
   if (!is.na(invalid <- match(TRUE, vapply(y, invalid_grm, logical(1L)))))
     stop(paste(names(y)[invalid], "does not have at least two valid responses"))
   H <- vapply(y, max, integer(1L), na.rm = TRUE)
+  Y <- y_mat(y)
 
   # check x0
   if(!is.matrix(x0)) x0 <- as.matrix(x0)
@@ -134,9 +135,6 @@ hgrmDIF <- function(y, x = NULL, z = NULL, x0 = x[, -1, drop = FALSE],
   con <- list(max_iter = 150, max_iter2 = 15, eps = 1e-03, eps2 = 1e-03, K = 25, C = 4,
               verbose = FALSE)
   con[names(control)] <- control
-
-  # set environments for utility functions
-  environment(x0DIF) <- environment(loglik_grmDIF) <- environment(theta_post_grmDIF) <- environment(dummy_fun_grm) <- environment(tab2df_grm) <- environment()
 
   # GL points
   K <- con[["K"]]
@@ -173,19 +171,30 @@ hgrmDIF <- function(y, x = NULL, z = NULL, x0 = x[, -1, drop = FALSE],
 
   }
 
-  # initialization of x0DIFnames, x0_lrm, and eta
-  tmp_theta <- rep(theta_ls, N)
-  tmp_x0 <- apply(x0, 2, rep, each = K)
+  # initialization of x0DIFnames and eta
   if(form_dif == "uniform") {
     x0DIFnames <- colnames(x0)
-    x0_lrm <- cbind(tmp_theta, tmp_x0)
     eta <- lapply(1:J, function(j) if(j %in% items_dif) rep(0, p0) else double(0L))
   } else{
     x0DIFnames <- c(colnames(x0), paste0("Dscrmn * ", colnames(x0)))
-    x0_lrm <- cbind(tmp_theta, tmp_x0, tmp_theta * tmp_x0)
     eta <- lapply(1:J, function(j) if(j %in% items_dif) rep(0, 2 * p0) else double(0L))
   }
-  colnames(x0_lrm) <- c("theta", x0DIFnames)
+  lrm_names <- c("theta", x0DIFnames)
+  dif_flag <- as.integer(seq_len(J) %in% items_dif)
+  x0_key <- {
+    tmp <- do.call(paste, c(unname(as.data.frame(x0)), sep = "\r"))
+    match(tmp, unique(tmp))
+  }
+  x0_u <- x0[!duplicated(x0_key), , drop = FALSE]
+  # N x J offsets entering the linear predictor: off0 + theta * off1
+  dif_offsets <- function(eta) {
+    off0 <- off1 <- matrix(0, N, J)
+    for (j in items_dif) {
+      off0[, j] <- x0 %*% eta[[j]][seq_len(p0)]
+      if (form_dif == "non-uniform") off1[, j] <- x0 %*% eta[[j]][p0 + seq_len(p0)]
+    }
+    list(off0 = off0, off1 = off1)
+  }
   names(eta) <- names(alpha) <- names(H)
 
   # initial values of gamma and lambda
@@ -208,19 +217,31 @@ hgrmDIF <- function(y, x = NULL, z = NULL, x0 = x[, -1, drop = FALSE],
 
     # construct w_ik
     # list of length K, each element an N-vector
-    posterior <- Map(theta_post_grmDIF, theta_ls, qw_ls)
-    # K-by-N matrix
-    w <- {
-      tmp <- matrix(unlist(posterior), N, K)
-      t(sweep(tmp, 1, rowSums(tmp), FUN = "/"))
-    }
+    off <- dif_offsets(eta)
+    w <- estep_grm(Y, alpha, beta, theta_ls, qw_ls, fitted_mean, fitted_var,
+                   off[["off0"]], off[["off1"]], dif_flag)[["w"]]
 
     # maximization with DIF
-    w_lrm <- as.vector(w)
+    # Respondents with the same x0 pattern and response contribute identical
+    # rows at each node, so their weights are pooled before fitting; this
+    # leaves the weighted likelihood unchanged.
+    tw <- t(w)
     for (j in seq(1, J)){
-      y_lrm <- rep(y[[j]], each = K)
-      pseudo_lrm[[j]] <- if(j %in% items_dif) lrm_fit(x0_lrm, y_lrm, weights = w_lrm)[["coefficients"]] else
-        lrm_fit(cbind(theta = tmp_theta), y_lrm, weights = w_lrm)[["coefficients"]]
+      init_j <- c(alpha[[j]][2:H[[j]]], beta[[j]], eta[[j]])
+      is_dif <- j %in% items_dif
+      obs <- which(!is.na(y[[j]]))
+      cell <- (if (is_dif) x0_key[obs] - 1L else 0L) * H[[j]] + y[[j]][obs]
+      agg <- rowsum(tw[obs, , drop = FALSE], cell)          # cells x K
+      cg <- as.integer(rownames(agg))
+      y_lrm <- rep((cg - 1L) %% H[[j]] + 1L, each = K)
+      theta_lrm <- rep(theta_ls, length(cg))
+      X_lrm <- if (is_dif) {
+        x0_cell <- x0_u[rep((cg - 1L) %/% H[[j]] + 1L, each = K), , drop = FALSE]
+        if (form_dif == "uniform") cbind(theta_lrm, x0_cell) else
+          cbind(theta_lrm, x0_cell, theta_lrm * x0_cell)
+      } else cbind(theta_lrm)
+      colnames(X_lrm) <- if (is_dif) lrm_names else "theta"
+      pseudo_lrm[[j]] <- cumlogit_fit(y_lrm, X_lrm, as.double(t(agg)), H[[j]], init_j)
     }
     beta <- vapply(pseudo_lrm, function(xx) xx[["theta"]], double(1L))
     eta <- lapply(1:J, function(j) if(j %in% items_dif) pseudo_lrm[[j]][-(1:H[[j]])] else double(0L))
@@ -243,27 +264,9 @@ hgrmDIF <- function(y, x = NULL, z = NULL, x0 = x[, -1, drop = FALSE],
     theta_vap <- t(theta_ls^2 %*% w) - theta_eap^2
 
     # variance regression
-    gamma <- lm_opr %*% theta_eap
-    r2 <- (theta_eap - x %*% gamma)^2 + theta_vap
-    if (ncol(z)==1) lambda <- log(mean(r2)) else{
-      s2 <- glm.fit(x = z, y = r2, intercept = FALSE, family = Gamma(link = "log"))[["fitted.values"]]
-      loglik <- -0.5 * (log(s2) + r2/s2)
-      LL0 <- sum(loglik)
-      dLL <- 1
-      for (m in seq(1, con[["max_iter2"]])) {
-        gamma <- lm.wfit(x, theta_eap, w = 1/s2)[["coefficients"]]
-        r2 <- (theta_eap - x %*% gamma)^2 + theta_vap
-        var_reg <- glm.fit(x = z, y = r2, intercept = FALSE, family = Gamma(link = "log"))
-        s2 <- var_reg[["fitted.values"]]
-        loglik <- -0.5 * (log(s2) + r2/s2)
-        LL_temp <- sum(loglik)
-        dLL <- LL_temp - LL0
-        if (dLL < con[["eps2"]])
-          break
-        LL0 <- LL_temp
-      }
-      lambda <- var_reg[["coefficients"]]
-    }
+    vr <- var_regression(x, z, theta_eap, theta_vap, lm_opr, con)
+    gamma <- vr[["gamma"]]
+    lambda <- vr[["lambda"]]
 
     # location constraint
     tmp <- mean(x %*% gamma)
@@ -304,21 +307,18 @@ hgrmDIF <- function(y, x = NULL, z = NULL, x0 = x[, -1, drop = FALSE],
 
   # inference
   # pik equals p_ik * w_k in Zhou2019supp
-  pik <- matrix(unlist(Map(function(mean, sd) dnorm(theta_ls, mean = mean, sd = sd), mean = fitted_mean, sd = sqrt(fitted_var))),
-                N, K, byrow = TRUE) * matrix(qw_ls, N, K, byrow = TRUE)
-  Lijk <- lapply(theta_ls, function(theta_k) exp(loglik_grmDIF(alpha = alpha, beta = beta, eta = eta, rep(theta_k, N))))  # K-list
-  Lik <- vapply(Lijk, function(L) exp(rowSums(log(L), na.rm = TRUE)), double(N))
-  Li <- rowSums(Lik * pik)
+  off <- dif_offsets(eta)
+  sc <- scores_grm(Y, alpha, beta, theta_ls, qw_ls, fitted_mean, fitted_var, x, z, H,
+                   off0 = off[["off0"]], off1 = off[["off1"]], X0 = x0, dif = dif_flag,
+                   nonuniform = form_dif == "non-uniform")
 
   # log likelihood
-  log_Lik <- sum(log(Li))
+  log_Lik <- sc[["loglik"]]
 
   # outer product of gradients
-  environment(sj_ab_grmDIF) <- environment(sj_ab_grm) <- environment(si_gamma) <- environment(si_lambda) <- environment()
-  s_abe <- unname(Reduce(rbind, lapply(1:J, sj_ab_grmDIF)))
-  s_lambda <- s_gamma <- NULL
-  s_gamma <- vapply(1:N, si_gamma, double(p))
-  s_lambda <- vapply(1:N, si_lambda, double(q))
+  s_abe <- sc[["s_item"]]
+  s_gamma <- sc[["s_gamma"]]
+  s_lambda <- sc[["s_lambda"]]
 
   # covariance matrix and standard errors
   s_all <- rbind(s_abe[-c(1L, nrow(s_abe)), , drop = FALSE], s_gamma, s_lambda)
