@@ -127,6 +127,53 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// loglik_nodes_cpp
+NumericMatrix loglik_nodes_cpp(const IntegerMatrix& Y, const NumericMatrix& alpha, const NumericVector& beta, const NumericMatrix& G);
+RcppExport SEXP _hIRT_loglik_nodes_cpp(SEXP YSEXP, SEXP alphaSEXP, SEXP betaSEXP, SEXP GSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const IntegerMatrix& >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< const NumericVector& >::type beta(betaSEXP);
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type G(GSEXP);
+    rcpp_result_gen = Rcpp::wrap(loglik_nodes_cpp(Y, alpha, beta, G));
+    return rcpp_result_gen;
+END_RCPP
+}
+// estep_md_cpp
+List estep_md_cpp(const List& LL, const NumericMatrix& mu, const NumericMatrix& sig2, const NumericMatrix& phi, const List& G, const NumericMatrix& lsc, const NumericVector& lqw);
+RcppExport SEXP _hIRT_estep_md_cpp(SEXP LLSEXP, SEXP muSEXP, SEXP sig2SEXP, SEXP phiSEXP, SEXP GSEXP, SEXP lscSEXP, SEXP lqwSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const List& >::type LL(LLSEXP);
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type mu(muSEXP);
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type sig2(sig2SEXP);
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type phi(phiSEXP);
+    Rcpp::traits::input_parameter< const List& >::type G(GSEXP);
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type lsc(lscSEXP);
+    Rcpp::traits::input_parameter< const NumericVector& >::type lqw(lqwSEXP);
+    rcpp_result_gen = Rcpp::wrap(estep_md_cpp(LL, mu, sig2, phi, G, lsc, lqw));
+    return rcpp_result_gen;
+END_RCPP
+}
+// item_scores_md_cpp
+NumericMatrix item_scores_md_cpp(const IntegerMatrix& Y, const NumericMatrix& alpha, const NumericVector& beta, const NumericMatrix& G, const NumericMatrix& w, const IntegerVector& H);
+RcppExport SEXP _hIRT_item_scores_md_cpp(SEXP YSEXP, SEXP alphaSEXP, SEXP betaSEXP, SEXP GSEXP, SEXP wSEXP, SEXP HSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const IntegerMatrix& >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< const NumericVector& >::type beta(betaSEXP);
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type G(GSEXP);
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type w(wSEXP);
+    Rcpp::traits::input_parameter< const IntegerVector& >::type H(HSEXP);
+    rcpp_result_gen = Rcpp::wrap(item_scores_md_cpp(Y, alpha, beta, G, w, H));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_hIRT_loglik_nk_cpp", (DL_FUNC) &_hIRT_loglik_nk_cpp, 7},
@@ -136,6 +183,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_hIRT_scores_cpp", (DL_FUNC) &_hIRT_scores_cpp, 16},
     {"_hIRT_gamma_glm_cpp", (DL_FUNC) &_hIRT_gamma_glm_cpp, 4},
     {"_hIRT_wls_cpp", (DL_FUNC) &_hIRT_wls_cpp, 3},
+    {"_hIRT_loglik_nodes_cpp", (DL_FUNC) &_hIRT_loglik_nodes_cpp, 4},
+    {"_hIRT_estep_md_cpp", (DL_FUNC) &_hIRT_estep_md_cpp, 7},
+    {"_hIRT_item_scores_md_cpp", (DL_FUNC) &_hIRT_item_scores_md_cpp, 6},
     {NULL, NULL, 0}
 };
 

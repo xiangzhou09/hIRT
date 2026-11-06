@@ -29,3 +29,15 @@ wls_cpp <- function(X, y, w) {
     .Call(`_hIRT_wls_cpp`, X, y, w)
 }
 
+loglik_nodes_cpp <- function(Y, alpha, beta, G) {
+    .Call(`_hIRT_loglik_nodes_cpp`, Y, alpha, beta, G)
+}
+
+estep_md_cpp <- function(LL, mu, sig2, phi, G, lsc, lqw) {
+    .Call(`_hIRT_estep_md_cpp`, LL, mu, sig2, phi, G, lsc, lqw)
+}
+
+item_scores_md_cpp <- function(Y, alpha, beta, G, w, H) {
+    .Call(`_hIRT_item_scores_md_cpp`, Y, alpha, beta, G, w, H)
+}
+
